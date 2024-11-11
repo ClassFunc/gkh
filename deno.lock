@@ -6,6 +6,7 @@
     "npm:@asteasolutions/zod-to-openapi@^7.2.0": "7.2.0_zod@3.23.8",
     "npm:commander@*": "12.1.0",
     "npm:dotenv@^16.4.5": "16.4.5",
+    "npm:lodash@^4.17.21": "4.17.21",
     "npm:yaml@^2.6.0": "2.6.0",
     "npm:zod@^3.23.8": "3.23.8"
   },
@@ -34,6 +35,9 @@
     "dotenv@16.4.5": {
       "integrity": "sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg=="
     },
+    "lodash@4.17.21": {
+      "integrity": "sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg=="
+    },
     "openapi3-ts@4.4.0": {
       "integrity": "sha512-9asTNB9IkKEzWMcHmVZE7Ts3kC9G7AFHfs8i7caD8HbI76gEjdkId4z/AkP83xdZsH7PLAnnbl47qZkXuxpArw==",
       "dependencies": [
@@ -52,6 +56,7 @@
       "jsr:@std/assert@1",
       "npm:@asteasolutions/zod-to-openapi@^7.2.0",
       "npm:dotenv@^16.4.5",
+      "npm:lodash@^4.17.21",
       "npm:yaml@^2.6.0",
       "npm:zod@^3.23.8"
     ]

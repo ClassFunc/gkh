@@ -1,5 +1,5 @@
 import {program} from "npm:commander";
-import {gen_docs} from "./commands/gen_docs.ts";
+import {gen_docs} from "./src/commands/gen_docs.ts";
 
 program
     .command("gen:docs")
