@@ -8,22 +8,21 @@ import {upperFirst} from "lodash";
 import {allFlowsDir} from "./util/allFlowsDir";
 import {logWarning} from "./util/logger";
 
-configDotenv()
 extendZodWithOpenApi(z);
 
 // const voidSchema = z.void().openapi({
 //     type: "null", // Specify the OpenAPI type as null for ZodVoid
 //     description: "Represents a void value.",
 // }).optional();
-const neverSchema = z.never().openapi(
-    {
-        param: {
-            name: "ZodNever"
-        },
-        type: "null",
-        description: "Represents a never value.",
-    }
-)
+// const neverSchema = z.never().openapi(
+//     {
+//         param: {
+//             name: "ZodNever"
+//         },
+//         type: "null",
+//         description: "Represents a never value.",
+//     }
+// )
 
 z.unknown().openapi(
     {
@@ -107,7 +106,6 @@ function registryFlowInDir({flowList, tags}: z.infer<typeof registryFlowInDirInp
                 "inputSchema",
                 "outputSchema",
                 "streamSchema",
-
             ]
             if (!takeFields.includes(field)) {
                 continue
@@ -228,7 +226,7 @@ function registryFlowInDir({flowList, tags}: z.infer<typeof registryFlowInDirInp
 
 function getPakageJson(): Record<string, any> {
     const p = path.resolve('package.json')
-    return require(p) as Record<string, any>
+    return JSON.parse(fs.readFileSync(p).toString()) as Record<string, any>
 }
 
 function getOpenApiDocumentation() {
@@ -264,20 +262,25 @@ function getOpenApiDocumentation() {
 export type WriteDocumentationInputSchema = Record<string, any>;
 
 export function writeDocumentation(options: WriteDocumentationInputSchema) {
+    let {out = './docs', name = 'api', envFile = '.env'} = options
+
+    configDotenv({path: envFile})
+
     // OpenAPI JSON
     const generatedContent = getOpenApiDocumentation();
-    let {name = 'api', out = './docs'} = options
 
     // YAML equivalent
     let yamlContent = `
 # This doc generated at ${new Date().toLocaleString()} 
 
 ${yaml.stringify(generatedContent)}
-    `
+`;
 
-
-    const docsEndpoint = process.env.DOCS_ENDPOINT ?? "https://docs.endpoint"
-
+    let docsEndpoint = process.env.DOCS_ENDPOINT
+    if (!docsEndpoint) {
+        logWarning("Please add process.env.DOCS_ENDPOINT; skip to using http://localhost:4001")
+        docsEndpoint = "http://localhost:4001"
+    }
     fs.writeFileSync(
         docsDir(out, `${name}.yaml`),
         yamlContent,
@@ -289,14 +292,17 @@ ${yaml.stringify(generatedContent)}
 
     let html = swaggerUIBundleHTML
         .replace(
-            "{{openapi_url}}",
-            `${docsEndpoint}/${name}.yaml`
+            "{{docs_enpoint}}",
+            docsEndpoint
         ).replace(
             "{{description}}",
             generatedContent.info.description!
         ).replace(
             "{{title}}",
             generatedContent.info.title
+        ).replace(
+            /{{name}}/g,
+            name,
         )
     fs.writeFileSync(
         docsDir(out, `${name}.html`),
@@ -325,7 +331,7 @@ const swaggerUIBundleHTML = `
     <meta name="description" content="{{description}}"/>
     <title>{{title}}</title>
     <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css"/>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/{{name}}_favicon.ico">
 </head>
 <body>
 <div id="swagger-ui"></div>
@@ -333,7 +339,7 @@ const swaggerUIBundleHTML = `
 <script>
     window.onload = () => {
         window.ui = SwaggerUIBundle({
-            url: '{{openapi_url}}',
+            url: '{{docs_enpoint}}/{{name}}.yaml',
             dom_id: '#swagger-ui',
         });
     };

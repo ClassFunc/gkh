@@ -9,6 +9,7 @@ program
     .description("generate openapi documents")
     .option("-n, --name <name>", "name of yaml file; defauls: api", 'api')
     .option('-o, --out <dir>', "output docs directory; defaults: ./docs", './docs')
+    .option('-e, --env-file <env-file>', "env file path; defaults: .env", '.env')
     .action(docs_gen);
 program
     .command("make:flow")
