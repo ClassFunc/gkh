@@ -5,6 +5,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import {configDotenv} from "dotenv";
 import {upperFirst} from "lodash";
+import {allFlowsDir} from "./util/allFlowsDir";
 
 configDotenv()
 extendZodWithOpenApi(z);
@@ -55,11 +56,9 @@ const ApiKeyAuth = registry.registerComponent('securitySchemes', 'ApiKeyAuth', {
 
 
 // read all flows in /flows dir
-fs.readdirSync(
-    __dirname + "/flows"
-).forEach(
+fs.readdirSync(allFlowsDir()).forEach(
     flowDir => {
-        const dir = path.join(__dirname, 'flows', flowDir)
+        const dir = path.join(allFlowsDir(), flowDir)
         // check `dir` has flows.ts or flows.js
         if (!fs.existsSync(dir + "/flows.ts") && !fs.existsSync(dir + "/flows.js")) {
             console.warn("flow folder `" + flowDir + "`shoud have flows.ts or flows.js")
@@ -231,7 +230,7 @@ function getOpenApiDocumentation() {
     return generator.generateDocument({
         openapi: "3.0.1",
         info: {
-            title: "API genkit for akasach.io",
+            title: "Your API title",
             description: `${process.env.API_ENDPOINT}`,
             version: "1.0.0",
         },
@@ -255,7 +254,7 @@ function writeDocumentation() {
 
     // YAML equivalent
     let fileContent = `
-# This doc generated at ${new Date().toLocaleString("vi-VN", {timeZone: "Asia/Saigon"})} Asia/Saigon time)
+# This doc generated at ${new Date().toLocaleString()} 
 
 ${yaml.stringify(docs)}
     `

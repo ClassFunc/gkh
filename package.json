@@ -23,7 +23,7 @@
     "zod": "^3.23.8"
   },
   "bin": {
-    "gk": "dist/index.js"
+    "gk": "lib/index.js"
   },
   "engines": {
     "node": "20"

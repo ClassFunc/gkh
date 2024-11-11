@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import {program} from "commander";
 import {docs_gen} from "./commands/docs_gen";
 import {make_flow} from "./commands/make_flow";
