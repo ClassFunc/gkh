@@ -12,9 +12,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ClassFunc/gkh.git"
+    "url": "git+https://github.com/ClassFunc/gkh.git"
   },
-  "private": true,
+  "private": false,
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.2.0",
     "chalk": "^4.1.2",
