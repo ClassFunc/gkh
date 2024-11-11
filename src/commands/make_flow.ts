@@ -68,7 +68,7 @@ export const usersListFlow = defineFlow(
             .replaceAll("usersList", flowName)
             .replaceAll("UsersList", upperFirst(flowName)),
     );
-    const addedExport = `export { ${flowName}Flow } from './flows/${name2}.ts'`;
+    const addedExport = `export { ${flowName}Flow } from './flows/${name2}'`;
     const tsContent = fs.readFileSync(flowDirFlowsTs);
     if (!tsContent.includes(addedExport)) {
         fs.writeFileSync(
