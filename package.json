@@ -27,9 +27,6 @@
   "bin": {
     "gk": "lib/index.js"
   },
-  "engines": {
-    "node": "20"
-  },
   "devDependencies": {
     "@types/lodash": "^4.17.13",
     "@types/node": "^22.9.0",
