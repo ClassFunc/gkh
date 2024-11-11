@@ -1,7 +1,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import {allFlowsDir} from "../util/allFlowsDir.ts";
-import {isEmpty, upperFirst,} from "https://deno.land/x/lodash@4.17.15-es/lodash.js"; // deno-lint-ignore no-explicit-any
+import {allFlowsDir} from "../util/allFlowsDir";
+import {isEmpty, upperFirst} from "lodash";
 
 // deno-lint-ignore no-explicit-any
 export function make_flow(name: string, options: Record<string, any>) {
@@ -12,17 +12,18 @@ export function make_flow(name: string, options: Record<string, any>) {
     const flowDir = path.join(allFlowsDir(), name1);
     const flowDirFlowsTs = path.join(flowDir, "flows.ts");
     if (!fs.existsSync(flowDirFlowsTs)) {
-        fs.mkdirSync(flowDir, { recursive: true });
+        fs.mkdirSync(flowDir, {recursive: true});
         fs.writeFileSync(
             flowDirFlowsTs,
             ``,
         );
     }
-    const subFlowDir = path.join(flowDir, "flows");
-    fs.mkdirSync(subFlowDir, { recursive: true });
-    const subFlowDirTs = path.join(subFlowDir, `${name2}.ts`);
 
     const flowName = `${name1}${upperFirst(name2)}`;
+    const subFlowDir = path.join(flowDir, "flows");
+    fs.mkdirSync(subFlowDir, {recursive: true});
+    const subFlowDirTs = path.join(subFlowDir, `${flowName}.ts`);
+
     fs.writeFileSync(
         subFlowDirTs,
         `
@@ -65,10 +66,10 @@ export const usersListFlow = defineFlow(
     },
 );
 `
-            .replaceAll("usersList", flowName)
-            .replaceAll("UsersList", upperFirst(flowName)),
+            .replace(/usersList/g, flowName)
+            .replace(/UsersList/g, upperFirst(flowName)),
     );
-    const addedExport = `export { ${flowName}Flow } from './flows/${name2}'`;
+    const addedExport = `export { ${flowName}Flow } from './flows/${flowName}'`;
     const tsContent = fs.readFileSync(flowDirFlowsTs);
     if (!tsContent.includes(addedExport)) {
         fs.writeFileSync(
