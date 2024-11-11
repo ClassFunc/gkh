@@ -1,10 +1,16 @@
 import {program} from "npm:commander";
 import {gen_docs} from "./src/commands/gen_docs.ts";
+import {make_flow} from "./src/commands/make_flow.ts";
 
 program
     .command("gen:docs")
     .description("generate openapi documents")
     .action(gen_docs);
+program
+    .command("make:flow")
+    .argument("name", "name of flow, separated by / , ex: users/list")
+    .description("generate a flow")
+    .action(make_flow);
 
 // export function add(a: number, b: number): number {
 //     return a + b;
