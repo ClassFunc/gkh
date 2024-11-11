@@ -4,9 +4,10 @@
   "description": "genkit helper",
   "main": "lib/index.js",
   "scripts": {
-    "dev": "node src/index.ts",
-    "build": "npx tsc",
+    "dev": "rm -fr lib/ && npx tsx src/index.ts",
+    "build": "rm -fr lib/ && npx tsc",
     "start": "node lib/index.js",
+    "release:local": "npm run build && rm -f `dirname $(which node)`/gk.js && npm i -g",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -16,6 +17,7 @@
   "private": true,
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.2.0",
+    "chalk": "^4.1.2",
     "commander": "^12.1.0",
     "dotenv": "^16.4.5",
     "lodash": "^4.17.21",

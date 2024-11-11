@@ -7,6 +7,8 @@ import {make_flow} from "./commands/make_flow";
 program
     .command("docs:gen")
     .description("generate openapi documents")
+    .option("-n, --name <name>", "name of yaml file; defauls: api", 'api')
+    .option('-o, --out <dir>', "output docs directory; defaults: ./docs", './docs')
     .action(docs_gen);
 program
     .command("make:flow")

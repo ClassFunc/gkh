@@ -2,12 +2,13 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import {allFlowsDir} from "../util/allFlowsDir";
 import {isEmpty, upperFirst} from "lodash";
+import {logError, logSuccess} from "../util/logger";
 
 // deno-lint-ignore no-explicit-any
 export function make_flow(name: string, options: Record<string, any>) {
     const [name1, name2] = name.split("/");
     if (isEmpty(name2)) {
-        console.error("<name> should be separated by '/'");
+        logError("<name> should be separated by '/'");
     }
     const flowDir = path.join(allFlowsDir(), name1);
     const flowDirFlowsTs = path.join(flowDir, "flows.ts");
@@ -79,5 +80,5 @@ ${addedExport}
 `,
         );
     }
-    console.log(`created flow ${name} successfully`);
+    logSuccess(`created flow ${name} successfully`);
 }

@@ -6,6 +6,7 @@ import * as path from "node:path";
 import {configDotenv} from "dotenv";
 import {upperFirst} from "lodash";
 import {allFlowsDir} from "./util/allFlowsDir";
+import {logWarning} from "./util/logger";
 
 configDotenv()
 extendZodWithOpenApi(z);
@@ -59,15 +60,15 @@ const ApiKeyAuth = registry.registerComponent('securitySchemes', 'ApiKeyAuth', {
 fs.readdirSync(allFlowsDir()).forEach(
     flowDir => {
         const dir = path.join(allFlowsDir(), flowDir)
-        // check `dir` has flows.ts or flows.js
-        if (!fs.existsSync(dir + "/flows.ts") && !fs.existsSync(dir + "/flows.js")) {
-            console.warn("flow folder `" + flowDir + "`shoud have flows.ts or flows.js")
-        } else {
-            const flowList = require(dir + "/flows") // /flows is flows.ts|.js
+        const flowsTs = path.join(dir, 'flows')
+
+        try {
+            const flowList = require(flowsTs) // /flows is flows.ts|.js
             if (flowList) {
-                // console.log({flowsObj: flowList, flowDir})
-                registryFlowInDir(/*dir,*/ {flowList, tags: [String(flowDir)]})
+                registryFlowInDir({flowList, tags: [String(flowDir)]})
             }
+        } catch (e: any) {
+            logWarning(e)
         }
     })
 
@@ -225,18 +226,31 @@ function registryFlowInDir({flowList, tags}: z.infer<typeof registryFlowInDirInp
     }
 }
 
+function getPakageJson(): Record<string, any> {
+    const p = path.resolve('package.json')
+    return require(p) as Record<string, any>
+}
+
 function getOpenApiDocumentation() {
+    //read package.json
+
+    const pkgJson = getPakageJson()
     const generator = new OpenApiGeneratorV3(registry.definitions);
+    let apiEndpoint = process.env.API_ENDPOINT
+    if (!apiEndpoint) {
+        logWarning("Please add process.env.API_ENDPOINT; skip to using http://localhost:4001")
+        apiEndpoint = "http://localhost:4001"
+    }
     return generator.generateDocument({
         openapi: "3.0.1",
         info: {
-            title: "Your API title",
-            description: `${process.env.API_ENDPOINT}`,
-            version: "1.0.0",
+            title: pkgJson?.name,
+            description: pkgJson?.description ?? "",
+            version: pkgJson?.version ?? "1.0.0",
         },
         servers: [
             {
-                url: process.env.API_ENDPOINT!,
+                url: apiEndpoint,
                 description: "The production server.",
             },
             {
@@ -247,55 +261,83 @@ function getOpenApiDocumentation() {
     });
 }
 
-function writeDocumentation() {
-    // OpenAPI JSON
-    const docs = getOpenApiDocumentation();
+export type WriteDocumentationInputSchema = Record<string, any>;
 
+export function writeDocumentation(options: WriteDocumentationInputSchema) {
+    // OpenAPI JSON
+    const generatedContent = getOpenApiDocumentation();
+    let {name = 'api', out = './docs'} = options
 
     // YAML equivalent
-    let fileContent = `
+    let yamlContent = `
 # This doc generated at ${new Date().toLocaleString()} 
 
-${yaml.stringify(docs)}
+${yaml.stringify(generatedContent)}
     `
 
-    const name = "api"
+
+    const docsEndpoint = process.env.DOCS_ENDPOINT ?? "https://docs.endpoint"
 
     fs.writeFileSync(
-        docsDir(`${name}.yaml`),
-        fileContent,
+        docsDir(out, `${name}.yaml`),
+        yamlContent,
         {
             encoding: 'utf-8',
         }
     );
     // HTML equivalent
-    let html = fs.readFileSync(
-        docsDir("api/swaggerUIBundle.html")
-    ).toString()
-    html = html.replace(
-        "{{openapi_url}}",
-        `${process.env.DOCS_ENDPOINT}/${name}.yaml`
-    ).replace(
-        "{{description}}",
-        docs.info.description!
-    ).replace(
-        "{{title}}",
-        docs.info.title
-    )
+
+    let html = swaggerUIBundleHTML
+        .replace(
+            "{{openapi_url}}",
+            `${docsEndpoint}/${name}.yaml`
+        ).replace(
+            "{{description}}",
+            generatedContent.info.description!
+        ).replace(
+            "{{title}}",
+            generatedContent.info.title
+        )
     fs.writeFileSync(
-        docsDir(`${name}.html`),
-        html, {
+        docsDir(out, `${name}.html`),
+        html,
+        {
             encoding: 'utf-8',
         }
     );
 }
 
-function docsDir(otherPath: string) {
-    const docsDir = path.resolve('docs')
+function docsDir(out: string, otherPath: string) {
+    const docsDir = path.resolve(out)
     if (!fs.existsSync(docsDir)) {
         fs.mkdirSync(docsDir, {recursive: true})
     }
     return path.resolve(docsDir, otherPath)
 }
 
-writeDocumentation();
+
+const swaggerUIBundleHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="description" content="{{description}}"/>
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css"/>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js" crossorigin></script>
+<script>
+    window.onload = () => {
+        window.ui = SwaggerUIBundle({
+            url: '{{openapi_url}}',
+            dom_id: '#swagger-ui',
+        });
+    };
+</script>
+</body>
+</html>
+`
