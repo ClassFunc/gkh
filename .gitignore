@@ -8,4 +8,5 @@
 *.orig
 *.pyc
 *.swp
-
+gkh
+./src/flows/**/*
