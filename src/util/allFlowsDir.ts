@@ -9,3 +9,12 @@ export function allFlowsDir() {
     }
     return d;
 }
+
+export function allSrcFlowsDir() {
+    const cwd = process.cwd();
+    const d = path.join(cwd, "src", "flows");
+    if (!fs.existsSync(d)) {
+        fs.mkdirSync(d, {recursive: true});
+    }
+    return d;
+}

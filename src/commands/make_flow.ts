@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import {allFlowsDir} from "../util/allFlowsDir";
+import {allSrcFlowsDir} from "../util/allFlowsDir";
 import {isEmpty, upperFirst} from "lodash";
 import {logError, logSuccess} from "../util/logger";
 
@@ -10,7 +10,7 @@ export function make_flow(name: string, options: Record<string, any>) {
     if (isEmpty(name2)) {
         logError("<name> should be separated by '/'");
     }
-    const flowDir = path.join(allFlowsDir(), name1);
+    const flowDir = path.join(allSrcFlowsDir(), name1);
     const flowDirFlowsTs = path.join(flowDir, "flows.ts");
     if (!fs.existsSync(flowDirFlowsTs)) {
         fs.mkdirSync(flowDir, {recursive: true});
