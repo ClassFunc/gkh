@@ -1,6 +1,6 @@
 {
   "name": "gkh",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "genkit helper",
   "main": "lib/index.js",
   "scripts": {
@@ -32,7 +32,8 @@
     "genkit",
     "tools",
     "genkit-flows",
-    "swagger-generation"
+    "swagger-generation",
+    "openapi-generation"
   ],
   "license": "MIT",
   "devDependencies": {

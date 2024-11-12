@@ -19,7 +19,7 @@
 npx gkh
 #or
 npm i -g gkh
-# then starting use `gk` or `gkh` command
+# then starting use `gk` or `gkh` command on your top of genkit project
 ```
 
 
@@ -41,7 +41,7 @@ Options:
 ### Generate swagger document
 
 ```shell
-gk make:swagger -o docs -n api -e .env
+gk docs:gen -o docs -n api -e .env
 ```
 
 Options:
