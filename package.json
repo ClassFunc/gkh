@@ -28,6 +28,12 @@
     "gk": "lib/index.js",
     "gkh": "lib/index.js"
   },
+  "keywords": [
+    "genkit",
+    "tools",
+    "genkit-flows",
+    "swagger-generation"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@types/lodash": "^4.17.13",
