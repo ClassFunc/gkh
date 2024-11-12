@@ -51,7 +51,27 @@ Options:
 -n, --name <name>: name of yaml file; defaul: api
 -e, --env-file <env-file>: env file path; default: .env
 ```
+## FAQ:
+- Q: I don't see any flows on Developer UI.
 
+- A: please add this lines to your `src/index.ts`:
+```ts
+// configureGenkit({}) ... 
+
+// read all flows in `src/flows` folder
+const allFlowsDir = path.join(__dirname, "flows")
+fs.readdirSync(allFlowsDir)
+    .forEach(name => {
+        const flowDir = path.join(allFlowsDir, name)
+        try {
+            require(path.join(flowDir, "flows")) // require flows.ts
+        } catch (e) {
+            console.warn("flow folder `" + name + "`shoud contains flows.ts or flows.js")
+        }
+    })
+
+// startFlowsServer();
+```
 ## Author:
 
 ClassFunc Softwares JSC (https://classfunc.com)
