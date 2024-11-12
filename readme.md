@@ -15,13 +15,19 @@
 
 ## Usage
 
-```npx gk --help```
+```shell
+npx gkh
+#or
+npm i -g gkh
+# then starting use `gk` or `gkh` command
+```
+
 
 ### Generate a flow
 
 ```shell
 # example
-npx gk make:flow users/list
+gk make:flow users/list
 ```
 
 will create a usersListFlow at `src/flows/users/flows/usersList.ts`, and export that flow to `src/flows/users/flows.ts` for
@@ -30,7 +36,7 @@ ready to use.
 ### Generate swagger document
 
 ```shell
-npx gk make:swagger -o docs -n api -e .env
+gk make:swagger -o docs -n api -e .env
 ```
 
 Options:

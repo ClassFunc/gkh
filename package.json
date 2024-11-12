@@ -1,6 +1,6 @@
 {
   "name": "gkh",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "genkit helper",
   "main": "lib/index.js",
   "scripts": {
@@ -25,7 +25,8 @@
     "zod": "^3.23.8"
   },
   "bin": {
-    "gk": "lib/index.js"
+    "gk": "lib/index.js",
+    "gkh": "lib/index.js"
   },
   "license": "MIT",
   "devDependencies": {
