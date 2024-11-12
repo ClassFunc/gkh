@@ -27,6 +27,7 @@
   "bin": {
     "gk": "lib/index.js"
   },
+  "license": "MIT",
   "devDependencies": {
     "@types/lodash": "^4.17.13",
     "@types/node": "^22.9.0",
