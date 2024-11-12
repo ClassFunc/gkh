@@ -14,7 +14,7 @@ program
 program
     .command("make:flow")
     .argument("<name>", "name of flow, separated by / , ex: users/list")
-    .option("-s, --stream", "streaming flow or not; default false")
+    .option("-s, --stream", "streaming flow or not; default: false")
     .description("generate a flow")
     .action(make_flow);
 
