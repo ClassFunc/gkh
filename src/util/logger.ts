@@ -1,6 +1,6 @@
 import chalk from "chalk";
 
-const cInfo = chalk.blue
+const cInfo = chalk.cyan
 const cError = chalk.red
 const cSuccess = chalk.green
 const cWarning = chalk.yellow

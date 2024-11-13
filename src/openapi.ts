@@ -5,7 +5,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import {configDotenv} from "dotenv";
 import {upperFirst} from "lodash";
-import {allFlowsDir} from "./util/allFlowsDir";
+import {libFlowsPath} from "./util/pathUtils";
 import {logWarning} from "./util/logger";
 
 extendZodWithOpenApi(z);
@@ -56,9 +56,9 @@ const ApiKeyAuth = registry.registerComponent('securitySchemes', 'ApiKeyAuth', {
 
 
 // read all flows in /flows dir
-fs.readdirSync(allFlowsDir()).forEach(
+fs.readdirSync(libFlowsPath()).forEach(
     flowDir => {
-        const dir = path.join(allFlowsDir(), flowDir)
+        const dir = path.join(libFlowsPath(), flowDir)
         const flowsTs = path.join(dir, 'flows')
 
         try {

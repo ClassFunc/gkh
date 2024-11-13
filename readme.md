@@ -59,10 +59,10 @@ Options:
 // configureGenkit({}) ... 
 
 // read all flows in `src/flows` folder
-const allFlowsDir = path.join(__dirname, "flows")
-fs.readdirSync(allFlowsDir)
+const libFlowsPath = path.join(__dirname, "flows")
+fs.readdirSync(libFlowsPath)
     .forEach(name => {
-        const flowDir = path.join(allFlowsDir, name)
+        const flowDir = path.join(libFlowsPath, name)
         try {
             require(path.join(flowDir, "flows")) // require flows.ts
         } catch (e) {
