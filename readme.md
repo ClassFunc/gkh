@@ -47,7 +47,7 @@ gk docs:gen -o docs -n api -e .env
 Options:
 
 ```
--o, --out <dir>: output docs directory; default: ./docs
+-o, --outDir <dir>: output docs directory; default: ./docs
 -n, --name <name>: name of yaml file; defaul: api
 -e, --env-file <env-file>: env file path; default: .env
 ```

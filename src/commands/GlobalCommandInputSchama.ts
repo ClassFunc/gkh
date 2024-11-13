@@ -1,5 +1,5 @@
 import {z} from "zod";
 
 export const GlobalCommandInputSchama = z.object({
-    force: z.boolean().default(false).optional()
+    force: z.boolean().describe(`force overwritten`).default(false).optional()
 })

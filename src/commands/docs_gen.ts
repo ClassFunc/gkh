@@ -1,12 +1,19 @@
 import {logInfo} from "../util/logger";
-import {WriteDocumentationInputSchema} from "../openapi";
+import {z} from "zod";
+import {GlobalCommandInputSchama} from "./GlobalCommandInputSchama";
+import {Command} from "commander";
 
-async function docs_gen(options: any) {
+const DocsGenInputSchema = GlobalCommandInputSchama.extend({
+    name: z.string().default('api').optional(),
+    outDir: z.string().default('./docs').optional(),
+    envFile: z.string().default('.env').optional()
+})
+export type IDocsGenInputSchema = z.infer<typeof DocsGenInputSchema>
+
+async function docs_gen(options: any, cmd: Command) {
     logInfo("generating openapi docs...")
-    // console.log(name,options)
-    // logWarning(name, options)
-    console.log(options)
-    require('../openapi').writeDocumentation(options as WriteDocumentationInputSchema)
+    options = cmd.optsWithGlobals();
+    require('../openapi').writeDocumentation(options)
 }
 
 

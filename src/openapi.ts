@@ -7,6 +7,7 @@ import {configDotenv} from "dotenv";
 import {upperFirst} from "lodash";
 import {libFlowsPath} from "./util/pathUtils";
 import {logWarning} from "./util/logger";
+import {IDocsGenInputSchema} from "./commands/docs_gen";
 
 extendZodWithOpenApi(z);
 
@@ -59,10 +60,10 @@ const ApiKeyAuth = registry.registerComponent('securitySchemes', 'ApiKeyAuth', {
 fs.readdirSync(libFlowsPath()).forEach(
     flowDir => {
         const dir = path.join(libFlowsPath(), flowDir)
-        const flowsTs = path.join(dir, 'flows')
+        const flowsJs = path.join(dir, 'flows')
 
         try {
-            const flowList = require(flowsTs) // /flows is flows.ts|.js
+            const flowList = require(flowsJs) // /flows is flows.ts|.js
             if (flowList) {
                 registryFlowInDir({flowList, tags: [String(flowDir)]})
             }
@@ -259,10 +260,9 @@ function getOpenApiDocumentation() {
     });
 }
 
-export type WriteDocumentationInputSchema = Record<string, any>;
 
-export function writeDocumentation(options: WriteDocumentationInputSchema) {
-    let {out = './docs', name = 'api', envFile = '.env'} = options
+export function writeDocumentation(options: IDocsGenInputSchema) {
+    let {outDir = './docs', name = 'api', envFile = '.env'} = options
 
     configDotenv({path: envFile})
 
@@ -282,7 +282,7 @@ ${yaml.stringify(generatedContent)}
         docsEndpoint = "http://localhost:4001"
     }
     fs.writeFileSync(
-        docsDir(out, `${name}.yaml`),
+        docsDir(outDir, `${name}.yaml`),
         yamlContent,
         {
             encoding: 'utf-8',
@@ -305,7 +305,7 @@ ${yaml.stringify(generatedContent)}
             name,
         )
     fs.writeFileSync(
-        docsDir(out, `${name}.html`),
+        docsDir(outDir, `${name}.html`),
         html,
         {
             encoding: 'utf-8',
