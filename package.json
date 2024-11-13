@@ -1,6 +1,6 @@
 {
   "name": "gkh",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "description": "genkit helper",
   "main": "lib/index.js",
   "scripts": {
