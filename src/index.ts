@@ -24,9 +24,12 @@ program
     .action(make_flow);
 program
     .command("make:rag")
-    .argument("<name>", "name; ex: menuQA")
-    .option("-t, --type [type]", "type of vectorstore; default: local", 'local')
+    .argument("<name>", "rag name; ex: menuQA")
+    .option("-t, --type [type]", "type of vectorstore; supported 'firestore', 'local', 'simple'", 'local')
     .option("-l, --limit [limit]", "retriever's limit; default: 5", parseInt)
+    .option("-c, --collection [collection]", "firestore collection", 'yourFirestoreCollection')
+    .option("-cf, --contentField [contentField]", "contentField", 'contentField')
+    .option("-vf, --vectorField [vectorField]", `vectorField; default: $contentField + '_embedding'`, '')
     .description("generate a rag")
     .action(make_rag);
 

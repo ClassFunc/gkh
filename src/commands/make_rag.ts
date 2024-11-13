@@ -1,7 +1,6 @@
-import {logError, logInfo} from "../util/logger";
+import {logDone, logError, logRunning} from "../util/logger";
 import {makeDir, makeFile, srcPath} from "../util/pathUtils";
 import {z} from "zod";
-import path from "node:path";
 import {GlobalCommandInputSchama} from "./GlobalCommandInputSchama";
 import {Command} from "commander";
 
@@ -9,19 +8,19 @@ import {Command} from "commander";
 const CommandInputSchema = GlobalCommandInputSchama.extend({
     name: z.string(),
     type: z.enum(['firestore', 'local', 'simple']).default("local").optional(),
-    limit: z.number().default(5).optional()
+    limit: z.number().default(5).optional(),
+    collection: z.string().default("yourFirestoreCollection").optional(),
+    contentField: z.string().default("contentField").optional(),
+    vectorField: z.string().optional(),
 })
 type ICommandInputSchema = z.infer<typeof CommandInputSchema>
 
-const EMBEDDINGS_DIR = "rags";
+const RAGS_DIR = "rags";
 
 export default function make_rag(name: string, options: any, cmd: Command) {
-
-    logInfo("make:rags", name)
-    // console.log(options)
-    // console.log(cmd.optsWithGlobals())
     options = cmd.optsWithGlobals()
-    const ok = makeDir(srcPath(EMBEDDINGS_DIR))
+    logRunning(options)
+    const ok = makeDir(srcPath(RAGS_DIR))
     if (!ok) {
         return;
     }
@@ -31,7 +30,7 @@ export default function make_rag(name: string, options: any, cmd: Command) {
         return;
     }
     const pdata = parsed.data
-    let code: string = ''
+    let code: string
     switch (parsed.data?.type) {
         case 'local':
             code = LocalVectorRAGCode(pdata)
@@ -46,29 +45,55 @@ export default function make_rag(name: string, options: any, cmd: Command) {
             code = LocalVectorRAGCode(pdata)
             break;
     }
-    const writePath = path.join(srcPath("rags"), `${name}.ts`)
-    makeFile(writePath, code, pdata.force)
+    const writePath = srcPath("rags", `${name}.ts`)
+    const done = makeFile(writePath, code, pdata.force)
+    if (done) {
+        logDone(writePath)
+    }
 }
 
 const FirestoreRAGCode = ({
                               name,
+                              collection,
+                              contentField,
+                              vectorField,
                           }: ICommandInputSchema) => `
 import {defineFirestoreRetriever} from "@genkit-ai/firebase";
 import {retrieve} from "@genkit-ai/ai/retriever";
-import {getFirestore} from "firebase-admin/firestore";
+import {getFirestore, FieldValue} from "firebase-admin/firestore";
 import {textEmbedding004} from "@genkit-ai/vertexai";
+import { embed } from "@genkit-ai/ai/embedder";
 
-const refName = '${name}';
+export const refName = '${name}';
+const db = getFirestore();
+
+const ${name}IndexConfig = {
+    collection: "${collection}",
+    contentField: "${contentField}",
+    vectorField: "${vectorField || (contentField + `_embedding`)}",
+    embedder: textEmbedding004, //
+}
 
 export const ${name}FirestoreRetriever = defineFirestoreRetriever({
   name: refName,
-  firestore: getFirestore(),
-  collection: "yourCollection",
-  contentField: "yourDataChunks",
-  vectorField: "embedding",
-  embedder: textEmbedding004, // Import from '@genkit-ai/googleai' or '@genkit-ai/vertexai'
+  firestore: db,
+  ...${name}IndexConfig,
   distanceMeasure: "COSINE", // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
 });
+
+async function ${name}FirestoreAdd(chunks: string[]) {
+  for (const text of chunks) {
+    const embedding = await embed({
+      embedder: ${name}IndexConfig.embedder,
+      content: text,
+    });
+    await db.collection(${name}IndexConfig.collection).add({
+      [${name}IndexConfig.vectorField]: FieldValue.vector(embedding),
+      [${name}IndexConfig.contentField]: text,
+    });
+  }
+}
+
 `
 
 
@@ -96,29 +121,33 @@ export const ${name}Retriever = devLocalRetrieverRef(refName);
 `
 const SimpleRAGCode = ({
                            name,
-                           limit
+                           limit,
+                           contentField
                        }: ICommandInputSchema) => `
 
 import {defineSimpleRetriever} from "@genkit-ai/ai/retriever";
 import { textEmbedding004 } from '@genkit-ai/vertexai';
+import {z} from "zod";
 
-const refName = '${name}';
+export const refName = '${name}';
 
 export const ${name}SimpleRetriever = defineSimpleRetriever(
-  {
-    name: "myDatabase",
-    configSchema: z
-      .object({
-        limit: z.number().optional(),
-      })
-      .optional(),
-    content: "contentField",
-    // and several keys to use as metadata
-    metadata: [],
-  },
-  async (query, {limit=${limit}) => {
-    //implement
-  }
+    {
+        name: refName,
+        configSchema: z
+          .object({
+            limit: z.number().optional(),
+          })
+          .optional(),
+        content: "${contentField}",
+        // and several keys to use as metadata
+        metadata: [],
+    },
+    async (query, config): Promise<any> => {
+        let limit = config?.limit ?? ${limit}
+        //implement
+        
+    }
 );
 `
 

@@ -20,3 +20,16 @@ export function logSuccess(...v: any) {
 export function logWarning(...v: any) {
     console.log(cWarning(...v))
 }
+
+export function logRunning(...v: any) {
+    logInfo('⏳', daddy(), JSON.stringify(v))
+}
+
+
+export function logDone(...v: any) {
+    logSuccess('✅', daddy(), 'done at:', v)
+}
+
+function daddy() {
+    return (new Error).stack?.split('\n')?.at(3)?.trim()?.split(`(`)?.at(0)?.split(`.`)?.at(1)?.trim();
+}

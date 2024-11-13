@@ -26,26 +26,23 @@ export function makeDir(p: string, recursive = true): boolean {
 export function makeFile(fp: string,
                          content: any,
                          force = false
-) {
+): boolean {
     const ok = makeDir(path.dirname(fp))
     if (!ok) {
         logError(`can not create ${path.dirname(fp)} directory`)
-        return;
+        return false;
     }
     const fileExists = fs.existsSync(fp)
     if (fileExists && !force) {
         logWarning(`file ${fp} already exists; use --force to overwrite`)
-        return;
+        return false;
     }
     fs.writeFileSync(fp, content, {encoding: 'utf-8'})
+    return true;
 }
 
 export function srcPath(...p: string[]): string {
-    const d = getCwd('src', ...p)
-    if (!makeDir(d)) {
-        throw new Error(`can not create ${d} directory`)
-    }
-    return d;
+    return getCwd('src', ...p);
 }
 
 export function libPath(...p: string[]): string {
