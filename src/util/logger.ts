@@ -27,7 +27,7 @@ export function logRunning(...v: any) {
 
 
 export function logDone(...v: any) {
-    logSuccess('✅', daddy(), 'done at:', v)
+    logSuccess('✅', daddy(), 'done:', v)
 }
 
 function daddy() {
