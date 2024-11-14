@@ -4,10 +4,11 @@
   "description": "genkit helper",
   "main": "lib/index.js",
   "scripts": {
-    "dev": "rm -fr lib/ && npx tsx src/index.ts",
-    "build": "rm -fr lib/ && npx tsc",
+    "dev": "npx tsx src/index.ts",
+    "build": "rm -fr lib/ && npm run version:update && npx tsc && npm run readme:update",
     "start": "node lib/index.js",
-    "readme:update": "export GKH_HELP_INFO_GEN=true && npm run build && node scripts/readme_gen.js",
+    "readme:update": "export GKH_HELP_INFO_GEN=true && node scripts/readme_gen.js",
+    "version:update": "scripts/version.sh",
     "release:local": "npm run build && rm -f `dirname $(which node)`/gk && npm i -g && chmod +x `dirname $(which node)`/gk",
     "test": "echo \"Error: no test specifiedn\" && exit 1"
   },

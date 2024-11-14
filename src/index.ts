@@ -4,11 +4,16 @@ import {Command, Option} from "commander";
 import {docs_gen} from "./commands/docs_gen";
 import {make_flow} from "./commands/make_flow";
 import make_rag from "./commands/make_rag";
+import {VERSION} from "./version";
 
 const gkhProgram = new Command();
 
 
 gkhProgram.addOption(new Option('-f, --force', 'force write').default(false))
+    .option("-v, --version", "version.txt", () => {
+        console.log(`Version: ${VERSION}`)
+        process.exit(0)
+    })
 gkhProgram
     .command("docs:gen")
     .description("generate openapi documents")
