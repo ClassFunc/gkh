@@ -2,7 +2,7 @@
 
 import {makeFile} from "../src/util/pathUtils";
 import {existsSync, readFileSync} from "node:fs";
-import {logDone, logRunning, logSuccess} from "../src/util/logger";
+import {logDone, logRunning} from "../src/util/logger";
 import {execSync} from "node:child_process";
 
 // const shouldGen = !!process.env.GKH_HELP_INFO_GEN
@@ -37,6 +37,6 @@ ${c.helpInformation()}
         .replace("{{helpInformation}}", helpInformation)
 
     makeFile('README.md', newReadme, true)
-    logSuccess(`README.md updated`)
+    logDone(`updated README.md`)
 
 })()

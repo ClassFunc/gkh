@@ -7,7 +7,7 @@
     "dev": "npx tsx src/index.ts",
     "build": "rm -fr lib/ && npm run version:update && npx tsc && npm run readme:update",
     "start": "node lib/index.js",
-    "readme:update": "npx tsx scripts/readme_update.ts",
+    "readme:update": "export GKH_HELP_INFO_GEN=true && npx tsx scripts/readme_update.ts",
     "version:update": "npx tsx scripts/version_update.ts",
     "release:local": "npm run build && rm -f `dirname $(which node)`/gk && npm i -g && chmod +x `dirname $(which node)`/gk",
     "release": "npm run build && npm publish",
