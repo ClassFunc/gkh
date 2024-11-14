@@ -1,6 +1,6 @@
 {
   "name": "gkh",
-  "version": "1.1.2",
+  "version": "1.1.4",
   "description": "genkit helper",
   "main": "lib/index.js",
   "scripts": {
@@ -10,7 +10,6 @@
     "start": "node lib/index.js",
     "readme:update": "npm run dev:genHelp && npx zx scripts/readme_gen.js",
     "release:local": "npm run build && rm -f `dirname $(which node)`/gk && npm i -g && chmod +x `dirname $(which node)`/gk",
-    "npm:publish": "npm run readme:update && npm publish",
     "test": "echo \"Error: no test specifiedn\" && exit 1"
   },
   "repository": {
