@@ -59,10 +59,10 @@ const FirestoreRAGCode = ({
                               vectorField,
                           }: ICommandInputSchema) => `
 import {defineFirestoreRetriever} from "@genkit-ai/firebase";
-import {retrieve} from "@genkit-ai/ai/retriever";
-import {getFirestore, FieldValue} from "firebase-admin/firestore";
+import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {textEmbedding004} from "@genkit-ai/vertexai";
-import { embed } from "@genkit-ai/ai/embedder";
+import {embed} from "@genkit-ai/ai/embedder";
+import {retrieve, RetrieverParams} from "@genkit-ai/ai/retriever";
 
 export const refName = '${name}';
 const db = getFirestore();
@@ -74,14 +74,21 @@ const ${name}IndexConfig = {
     embedder: textEmbedding004, //
 }
 
-export const ${name}FirestoreRetriever = defineFirestoreRetriever({
+export const ${name}FSRetriever = defineFirestoreRetriever({
   name: refName,
   firestore: db,
   ...${name}IndexConfig,
   distanceMeasure: "COSINE", // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
 });
 
-async function ${name}FirestoreAdd(chunks: string[]) {
+export const ${name}FSRetrieverRetrieve = (params: RetrieverParams) => {
+    return retrieve({
+        ...params,
+        retriever: ${name}FSRetriever,
+    })
+}
+
+async function ${name}FSIndexerAdd(chunks: string[]) {
   for (const text of chunks) {
     const embedding = await embed({
       embedder: ${name}IndexConfig.embedder,
