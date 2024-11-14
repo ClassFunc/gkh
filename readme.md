@@ -8,8 +8,8 @@
 
 - [x] Generate openapi yaml&html
 - [x] make:flow
+- [x] make:rag
 - [ ] make:tool
-- [ ] make:rag
 - [ ] Others things... (welcome any issue or PR)
 
 ## Usage
@@ -21,8 +21,8 @@ npm i -g gkh
 # then starting use `gk` or `gkh` command on your top of genkit project
 ```
 
-
 ### docs:gen
+
 ```
 Usage:  docs:gen [options]
 
@@ -37,6 +37,7 @@ Options:
 ```
 
 ### make:flow
+
 ```
 Usage:  make:flow [options] <name>
 
@@ -53,6 +54,7 @@ Options:
 ```
 
 ### make:rag
+
 ```
 Usage:  make:rag [options] <name>
 

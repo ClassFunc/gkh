@@ -8,8 +8,8 @@
 
 - [x] Generate openapi yaml&html
 - [x] make:flow
+- [x] make:rag
 - [ ] make:tool
-- [ ] make:rag
 - [ ] Others things... (welcome any issue or PR)
 
 ## Usage
