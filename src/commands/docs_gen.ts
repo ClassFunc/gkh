@@ -1,4 +1,4 @@
-import {logInfo} from "../util/logger";
+import {logRunning} from "../util/logger";
 import {z} from "zod";
 import {GlobalCommandInputSchama} from "./GlobalCommandInputSchama";
 import {Command} from "commander";
@@ -11,9 +11,9 @@ const DocsGenInputSchema = GlobalCommandInputSchama.extend({
 export type IDocsGenInputSchema = z.infer<typeof DocsGenInputSchema>
 
 async function docs_gen(options: any, cmd: Command) {
-    logInfo("generating openapi docs...")
+    logRunning("generating openapi docs...")
     options = cmd.optsWithGlobals();
-    require('../openapi').writeDocumentation(options)
+    require('../openapi/openapi').writeDocumentation(options)
 }
 
 

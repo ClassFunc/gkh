@@ -4,6 +4,7 @@ import {Command, Option} from "commander";
 import {docs_gen} from "./commands/docs_gen";
 import {make_flow} from "./commands/make_flow";
 import make_rag from "./commands/make_rag";
+import {makeFile} from "./util/pathUtils";
 
 const program = new Command();
 
@@ -34,4 +35,15 @@ program
     .description("generate a rag")
     .action(make_rag);
 
+if (process.argv.includes("--generate-help")) {
+    // write file
+    makeFile("docs/helpInformation.md", program.commands.map(c => `
+### ${c.name()}
+\`\`\`
+${c.helpInformation()}
+\`\`\``).join(`\n`), true)
+    process.argv = process.argv.filter(a => !a.includes("--generate-help"))
+}
+
+//
 program.parse();
