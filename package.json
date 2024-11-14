@@ -10,6 +10,7 @@
     "readme:update": "export GKH_HELP_INFO_GEN=true && node scripts/readme_gen.js",
     "version:update": "scripts/version.sh",
     "release:local": "npm run build && rm -f `dirname $(which node)`/gk && npm i -g && chmod +x `dirname $(which node)`/gk",
+    "release": "npm run build && npm publish",
     "test": "echo \"Error: no test specifiedn\" && exit 1"
   },
   "repository": {
