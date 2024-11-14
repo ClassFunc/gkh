@@ -6,10 +6,8 @@
 
 ## Main functions
 
-- [x] Generate openapi yaml&html
-- [x] make:flow
-- [x] make:rag
-- [ ] make:tool
+{{mainFunctions}}
+
 - [ ] Others things... (welcome any issue or PR)
 
 ## Usage
