@@ -19,6 +19,7 @@ program
 program
     .command("make:flow")
     .argument("<name>", "name of flow, separated by / , ex: users/list")
+    .option("-d, --directory [directory]", "flows dir name", 'flows')
     .option("-s, --stream [stream]", "streaming flow or not; default: false", false)
     .description("generate a flow")
     .action(make_flow);

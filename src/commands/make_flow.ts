@@ -1,19 +1,21 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import {makeFile, srcPath} from "../util/pathUtils";
+import {makeDir, makeFile, srcPath} from "../util/pathUtils";
 import {isEmpty, upperFirst} from "lodash";
-import {logError, logSuccess} from "../util/logger";
+import {logDone, logError, logRunning} from "../util/logger";
 import {GlobalCommandInputSchama} from "./GlobalCommandInputSchama";
 import {z} from "zod";
 import {Command} from "commander";
 
 const MakeFlowInputSchema = GlobalCommandInputSchama.extend({
     name: z.string().includes('/'),
+    directory: z.string().default('flows'),
     stream: z.boolean().default(false).optional(),
 })
 
 export function make_flow(name: string, options: any, cmd: Command) {
     options = cmd.optsWithGlobals()
+    logRunning(options)
     const parsed = MakeFlowInputSchema.safeParse({name, ...options})
     if (!parsed.success) {
         logError(parsed.error.message)
@@ -25,22 +27,23 @@ export function make_flow(name: string, options: any, cmd: Command) {
         logError("<name> should be separated by '/'");
         return;
     }
-    const flowDir = srcPath(name1);
+    const flowDir = srcPath(pdata.directory, name1);
     const flowDirFlowsTs = path.join(flowDir, "flows.ts");
-    if(!fs.existsSync(flowDirFlowsTs)) {
+    if (!fs.existsSync(flowDirFlowsTs)) {
         makeFile(flowDirFlowsTs, ``)
     }
 
-    const flowName = `${name1}${upperFirst(name2)}`;
     const subFlowDir = path.join(flowDir, "flows");
-    fs.mkdirSync(subFlowDir, {recursive: true});
+    const flowName = `${name1}${upperFirst(name2)}`;
+    makeDir(subFlowDir)
     const subFlowDirTs = path.join(subFlowDir, `${flowName}.ts`);
-
     makeFile(
         subFlowDirTs,
         flowTemplate(flowName, pdata),
         pdata.force
     );
+
+    // export
     const addedExport = `export { ${flowName}Flow } from './flows/${flowName}'`;
     const tsContent = fs.readFileSync(flowDirFlowsTs);
 
@@ -52,7 +55,7 @@ ${addedExport}
 `,
         );
     }
-    logSuccess(`created flow ${name} successfully`);
+    logDone(subFlowDirTs)
 }
 
 
@@ -92,7 +95,7 @@ export const usersListFlow = defineFlow(
     async (input: IUsersListFlowInputSchema,${
     pdata.stream ? `streamingCallback:any` : ``
 }) => {
-        // implement
+        // implementation
     },
 );
 `
