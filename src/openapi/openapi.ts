@@ -99,7 +99,7 @@ function registryFlowInDir({flowList, tags}: z.infer<typeof RegistryFlowInDirInp
             streamSchema: null,
         }
         for (const [field, fieldValue] of Object.entries(flowObj as any)) {
-            console.log({field, fieldValue})
+
             const takeFields = [
                 "name",
                 "inputSchema",
