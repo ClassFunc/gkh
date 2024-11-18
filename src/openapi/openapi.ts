@@ -60,6 +60,11 @@ const ApiKeyAuth = registry.registerComponent('securitySchemes', 'ApiKeyAuth', {
 fs.readdirSync(libFlowsPath()).forEach(
     flowDir => {
         const dir = path.join(libFlowsPath(), flowDir)
+        const stat = fs.statSync(dir);
+        if (!stat.isDirectory()) {
+            return;
+        }
+
         const flowsJs = path.join(dir, 'flows')
 
         try {
@@ -110,7 +115,7 @@ function registryFlowInDir({flowList, tags}: z.infer<typeof RegistryFlowInDirInp
                 continue
             }
 
-            if (field === "name") {
+            if (field === "name" && !!fieldValue) {
                 flowConfig.name = fieldValue! as string
             }
             if (field === "inputSchema") {
@@ -123,7 +128,8 @@ function registryFlowInDir({flowList, tags}: z.infer<typeof RegistryFlowInDirInp
                 flowConfig.streamSchema = fieldValue
             }
         }
-        flowConfigs.push(flowConfig)
+        if (!!flowConfig.name)
+            flowConfigs.push(flowConfig)
     }
 
     if (!flowConfigs || flowConfigs.length === 0) {
