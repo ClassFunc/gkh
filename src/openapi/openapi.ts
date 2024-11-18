@@ -72,7 +72,7 @@ fs.readdirSync(libFlowsPath()).forEach(
         }
     })
 
-const registryFlowInDirInputSchema = z.object(
+const RegistryFlowInDirInputSchema = z.object(
     {
         flowList: z.record(z.any()),
         tags: z.array(z.string())
@@ -88,20 +88,18 @@ export const FlowSchema = z.object({
 })
 export type IFlowSchema = z.infer<typeof FlowSchema>
 
-function registryFlowInDir({flowList, tags}: z.infer<typeof registryFlowInDirInputSchema>) {
-    // console.log("---- flowsObj:", flowsObj)
+function registryFlowInDir({flowList, tags}: z.infer<typeof RegistryFlowInDirInputSchema>) {
     const flowConfigs: Array<IFlowSchema> = []
-    for (const [key, flowObj] of Object.entries(flowList)) {
+    for (let [key, flowObj] of Object.entries(flowList)) {
+        flowObj = flowObj.hasOwnProperty('flow') ? flowObj.flow : flowObj;
         let flowConfig: IFlowSchema = {
             name: "",
             inputSchema: null,
             outputSchema: null,
             streamSchema: null,
         }
-        // console.log(
-        //     "-- flowName:", flowObj.name,
-        // )
         for (const [field, fieldValue] of Object.entries(flowObj as any)) {
+            console.log({field, fieldValue})
             const takeFields = [
                 "name",
                 "inputSchema",
@@ -127,10 +125,11 @@ function registryFlowInDir({flowList, tags}: z.infer<typeof registryFlowInDirInp
         }
         flowConfigs.push(flowConfig)
     }
+
     if (!flowConfigs || flowConfigs.length === 0) {
         return
     }
-    // console.log({flowConfigs})
+
     for (const flowConf of flowConfigs) {
 
         const isQueryStreamable = flowConf.streamSchema && (Object.keys(flowConf.streamSchema).length > 0)
