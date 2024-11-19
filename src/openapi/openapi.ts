@@ -6,7 +6,7 @@ import * as path from "node:path";
 import {configDotenv} from "dotenv";
 import {upperFirst} from "lodash";
 import {libFlowsPath} from "../util/pathUtils";
-import {logWarning} from "../util/logger";
+import {logRunning, logWarning} from "../util/logger";
 import {IDocsGenInputSchema} from "../commands/docs_gen";
 
 extendZodWithOpenApi(z);
@@ -267,7 +267,7 @@ function getOpenApiDocumentation() {
 
 
 export function writeDocumentation(options: IDocsGenInputSchema) {
-    let {outDir = './docs', name = 'api', envFile = '.env'} = options
+    let {out = './docs', name = 'api', envFile = '.env'} = options
 
     configDotenv({path: envFile})
 
@@ -286,8 +286,11 @@ ${yaml.stringify(generatedContent)}
         logWarning("Please add process.env.DOCS_ENDPOINT; skip to using http://localhost:4001")
         docsEndpoint = "http://localhost:4001"
     }
+
+    const wPath = docsDir(out, `${name}.yaml`)
+    logRunning(`writing to ${wPath}`)
     fs.writeFileSync(
-        docsDir(outDir, `${name}.yaml`),
+        wPath,
         yamlContent,
         {
             encoding: 'utf-8',
@@ -310,7 +313,7 @@ ${yaml.stringify(generatedContent)}
             name,
         )
     fs.writeFileSync(
-        docsDir(outDir, `${name}.html`),
+        docsDir(out, `${name}.html`),
         html,
         {
             encoding: 'utf-8',

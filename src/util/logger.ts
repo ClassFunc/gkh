@@ -1,35 +1,36 @@
-import chalk from "chalk";
+const endsColor = `\u001B[39m`;
+const errColor = `\u001B[31m`;
+const successColor = `\u001B[32m`;
+const warningColor = `\u001B[33m`;
+const infoColor = "\u001B[36m";
 
-const cInfo = chalk.cyan
-const cError = chalk.red
-const cSuccess = chalk.green
-const cWarning = chalk.yellow
+const log = (...v: any) => {
+    console.log(...v);
+};
 
-export function logInfo(...v: any) {
-    console.log(cInfo(...v))
-}
+const logDone = (...v: any[]) => {
+    log("<<✅ ", successColor, ...v, endsColor);
+};
 
-export function logError(...v: any) {
-    console.log(cError(...v))
-}
+const logError = (...v: any[]) => {
+    log("<<🔴🔻🔻", errColor, ...v, endsColor);
+    for (const e of v) {
+        if (e instanceof Error) {
+            log(errColor, e.stack, endsColor)
+        }
+    }
+};
 
-export function logSuccess(...v: any) {
-    console.log(cSuccess(...v))
-}
+const logWarning = (...v: any[]) => {
+    log("- 🟨", warningColor, ...v, endsColor);
+};
 
-export function logWarning(...v: any) {
-    console.log(cWarning(...v))
-}
+const logRunning = (...v: any[]) => {
+    log("🏃‍♂️", warningColor, ...v, endsColor);
+};
 
-export function logRunning(...v: any) {
-    logInfo('⏳', daddy(), JSON.stringify(v))
-}
+const logInfo = (...v: any[]) => {
+    log("🔵>>", infoColor, ...v, endsColor);
+};
 
-
-export function logDone(...v: any) {
-    logSuccess('✅', daddy(), 'done:', ...v)
-}
-
-function daddy() {
-    return (new Error).stack?.split('\n')?.at(3)?.trim()?.split(`(`)?.at(0)?.split(`.`)?.at(1)?.trim();
-}
+export {log, logDone, logError, logWarning, logInfo, logRunning};
