@@ -37,7 +37,7 @@ export function make_command() {
         .replace(`// ENDS_IMPORT_DONOTREMOVETHISLINE`, importCode + `\n// ENDS_IMPORT_DONOTREMOVETHISLINE`)
         .replace(`// NEXT_COMMAND__DONOTREMOVETHISLINE`, commandCode + `\n// NEXT_COMMAND__DONOTREMOVETHISLINE`)
     writeFileSync(idxFPath, newIndexCode)
-    logRunning(`prettering ${idxFPath}`)
+    logRunning(`prettiering ${idxFPath}`)
     execSync(`npx prettier --write ${idxFPath}`)
 
     logDone(fPath)
@@ -46,17 +46,34 @@ export function make_command() {
 
 const commandTsCode = (data: SafeParseReturnType<ICommandInput, ICommandInput>['data']) => {
     data = data!
+    const fnName = data.name.replace(':', '_')
     return `
-    import {z} from "zod";
-    import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
+import {z} from "zod";
+import {Command} from "commander";
+import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
+import {logDone, logError, logRunning} from "@/util/logger";
+
+const CommandInputSchema = GlobalCommandInputSchema.extend({
     
-    const CommandInputSchema = GlobalCommandInputSchema.extend({
-    
-    })
-    
-    export const ${data.name.replace(':', '_')} = (input:z.infer<typeof CommandInputSchema>)=>{
-    
+})
+
+export function ${fnName}(){
+    const cmd = Object.values(arguments).filter(v => v instanceof Command)[0];
+    if (!cmd) {
+        logError(\`no cmd instance found; make sure add this function: e.g: command.action(${fnName})\`)
+        return;
     }
+    const options = cmd.optsWithGlobals()
+    logRunning(options)
+    const parsed = CommandInputSchema.safeParse(options)
+    if (parsed.error) {
+        logError(parsed.error)
+        return;
+    }
+    const data = parsed.data
+    // work with input data
+    
+}
     `
 }
 const appendedIndexCode = (data: SafeParseReturnType<ICommandInput, ICommandInput>['data']) => {
