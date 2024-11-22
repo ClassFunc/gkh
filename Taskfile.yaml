@@ -1,0 +1,11 @@
+# Generate task file
+version: '3'
+env:
+  GCLOUD_PROJECT: cf-akasach
+  GCLOUD_LOCATION: asia-southeast1
+  SERVICE_NAME: apigenkit-akasach
+
+tasks:
+  make:command:
+    cmds:
+      - internal/index.ts

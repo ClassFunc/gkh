@@ -1,9 +1,8 @@
 #!/usr/bin/env tsx
 
 import {makeFile} from "../src/util/pathUtils";
-import {existsSync, readFileSync} from "node:fs";
-import {logDone, logRunning} from "../src/util/logger";
-import {execSync} from "node:child_process";
+import {readFileSync} from "node:fs";
+import {logDone} from "../src/util/logger";
 
 // const shouldGen = !!process.env.GKH_HELP_INFO_GEN
 //
@@ -26,7 +25,7 @@ import {execSync} from "node:child_process";
     const helpInformation = gkhProgram.commands.map(c => `
 ### <a id="${c.name()}">${c.name()}</a>
 \`\`\`
-${c.helpInformation()}
+${c.helpInformation().replace(`Usage: `,`Usage: gkh`)}
 \`\`\``).join(`\n`);
 
 

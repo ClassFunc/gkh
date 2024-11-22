@@ -21,7 +21,7 @@ gkhProgram
     .description("generate openapi documents")
     .option("-n, --name <name>", "name of yaml file; defauls: api", "api")
     .option(
-        "-o, --out <dir>",
+        "-o, --out <out>",
         "output docs directory; defaults: ./docs",
         "./docs",
     )
@@ -60,6 +60,7 @@ gkhProgram
     )
     .description("generate a rag")
     .action(make_rag);
+
 
 // NEXT_COMMAND__DONOTREMOVETHISLINE
 

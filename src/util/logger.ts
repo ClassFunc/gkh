@@ -13,12 +13,15 @@ const logDone = (...v: any[]) => {
 };
 
 const logError = (...v: any[]) => {
-    log("<<🔴🔻🔻", errColor, ...v, endsColor);
+    log("<<🔴Error:🔻🔻", errColor);
     for (const e of v) {
         if (e instanceof Error) {
-            log(errColor, e.stack, endsColor)
+            log(errColor, e.message)
+        } else {
+            log(errColor, e)
         }
     }
+    log(endsColor)
 };
 
 const logWarning = (...v: any[]) => {

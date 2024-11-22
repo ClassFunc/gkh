@@ -6,7 +6,6 @@
 
 ## Main functions
 
-- [x] [make:ai - make ai instance](#make:ai)
 - [x] [docs:gen - generate openapi documents](#docs:gen)
 - [x] [make:flow - generate a flow](#make:flow)
 - [x] [make:rag - generate a rag](#make:rag)
@@ -23,27 +22,15 @@ npm i -g gkh
 ```
 
 
-### <a id="make:ai">make:ai</a>
-```
-Usage:  make:ai [options]
-
-make ai instance
-
-Options:
-  -n, --name <name>  name of ai instance (default: "ai")
-  -h, --help         display help for command
-
-```
-
 ### <a id="docs:gen">docs:gen</a>
 ```
-Usage:  docs:gen [options]
+Usage: gkh docs:gen [options]
 
 generate openapi documents
 
 Options:
   -n, --name <name>          name of yaml file; defauls: api (default: "api")
-  -o, --out <dir>            output docs directory; defaults: ./docs (default: "./docs")
+  -o, --out <out>            output docs directory; defaults: ./docs (default: "./docs")
   -e, --env-file <env-file>  env file path; defaults: .env (default: ".env")
   -h, --help                 display help for command
 
@@ -51,7 +38,7 @@ Options:
 
 ### <a id="make:flow">make:flow</a>
 ```
-Usage:  make:flow [options] <name>
+Usage: gkh make:flow [options] <name>
 
 generate a flow
 
@@ -67,7 +54,7 @@ Options:
 
 ### <a id="make:rag">make:rag</a>
 ```
-Usage:  make:rag [options] <name>
+Usage: gkh make:rag [options] <name>
 
 generate a rag
 
