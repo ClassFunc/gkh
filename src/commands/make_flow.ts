@@ -65,17 +65,17 @@ import { ai } from '@/ai/ai';
 import { z } from "genkit";
 
 // input schema
-export const UsersListFlowInputSchema = z.any();
-export type IUsersListFlowInputSchema = z.infer<typeof UsersListFlowInputSchema>;
+export const UsersListFlowI = z.any();
+export type IUsersListFlowI = z.infer<typeof UsersListFlowI>;
 
 // output schema
-export const UsersListFlowOutputSchema = z.any();
-export type IUsersListFlowOutputSchema = z.infer<typeof UsersListFlowOutputSchema>;
+export const UsersListFlowO = z.any();
+export type IUsersListFlowO = z.infer<typeof UsersListFlowO>;
 ${
     pdata.stream
         ? `// stream schema
-export const UsersListFlowStreamSchema = z.any();
-export type IUsersListFlowStreamSchema = z.infer<typeof UsersListFlowStreamSchema>;
+export const UsersListFlowS = z.any();
+export type IUsersListFlowS = z.infer<typeof UsersListFlowS>;
 `
         : ``
 }
@@ -83,9 +83,9 @@ export type IUsersListFlowStreamSchema = z.infer<typeof UsersListFlowStreamSchem
 export const usersListFlow = ai.${pdata.stream ? 'defineStreamingFlow' : 'defineFlow'}(
     {
         name: "usersList",
-        inputSchema: UsersListFlowInputSchema,
-        outputSchema: UsersListFlowOutputSchema,
-        ${pdata.stream ? `streamSchema: UsersListFlowStreamSchema,` : ""}
+        inputSchema: UsersListFlowI,
+        outputSchema: UsersListFlowO,
+        ${pdata.stream ? `streamSchema: UsersListFlowS` : ""}
     },
     async (input${pdata.stream ? `, streamingCallback` : ``}) => {
         // implementation
