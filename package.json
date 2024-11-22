@@ -1,6 +1,6 @@
 {
   "name": "gkh",
-  "version": "1.1.9",
+  "version": "2.0.0",
   "description": "genkit helper",
   "main": "esbuild_out/index.js",
   "scripts": {
