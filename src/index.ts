@@ -12,7 +12,7 @@ const gkhProgram = new Command();
 
 gkhProgram
     .addOption(new Option("-f, --force", "force write").default(false))
-    .option("-v, --version", "version.txt", () => {
+    .option("-v, --version", "show version", () => {
         console.log(`Version: ${VERSION}`);
         process.exit(0);
     });
