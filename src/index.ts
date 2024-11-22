@@ -5,7 +5,6 @@ import {docs_gen} from "./commands/docs_gen";
 import {make_flow} from "./commands/make_flow";
 import make_rag from "./commands/make_rag";
 import {VERSION} from "./version";
-import {make_ai} from "./commands/make_ai";
 
 // ENDS_IMPORT_DONOTREMOVETHISLINE
 const gkhProgram = new Command();
@@ -16,11 +15,6 @@ gkhProgram
         console.log(`Version: ${VERSION}`);
         process.exit(0);
     });
-gkhProgram
-    .command("make:ai")
-    .description("make ai instance")
-    .option("-n, --name <name>", "name of ai instance", "ai")
-    .action(make_ai);
 
 gkhProgram
     .command("docs:gen")
