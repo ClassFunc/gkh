@@ -48,34 +48,32 @@ const commandTsCode = (data: SafeParseReturnType<ICommandInput, ICommandInput>['
     data = data!
     const fnName = data.name.replace(':', '_')
     return `
-import {z} from "zod";
-import {Command} from "commander";
+import {SafeParseReturnType, z} from "zod";
 import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
-import {logDone, logError, logRunning} from "@/util/logger";
+import {getParsedData} from "@/util/commandParser";
 
-const CommandInputSchema = GlobalCommandInputSchema.extend({
-    
-})
+const CommandInputSchema = GlobalCommandInputSchema.extend({})
+type ICommandInput = z.infer<typeof CommandInputSchema>;
 
-export function ${fnName}(){
-    const cmd = Object.values(arguments).filter(v => v instanceof Command)[0];
-    if (!cmd) {
-        logError(\`no cmd instance found; make sure add this function: e.g: command.action(${fnName})\`)
-        return;
-    }
-    const options = cmd.optsWithGlobals()
-    logRunning(options)
-    const parsed = CommandInputSchema.safeParse(options)
-    if (parsed.error) {
-        logError(parsed.error)
-        return;
-    }
-    const data = parsed.data
-    // work with input data
+export function ${fnName}() {
+    const data = getParsedData(arguments, CommandInputSchema)
+    const code = get_code(data)
+    // implementations
     
 }
-    `
+
+export function get_code(data: SafeParseReturnType<ICommandInput, ICommandInput>['data']) {
+    // work with input
+    
+    return \`
+    
+\`;
 }
+
+
+`
+}
+
 const appendedIndexCode = (data: SafeParseReturnType<ICommandInput, ICommandInput>['data']) => {
     data = data!
     const fname = data.name.replace(":", "_")
