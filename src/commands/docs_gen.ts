@@ -1,9 +1,9 @@
 import {logInfo, logRunning} from "../util/logger";
 import {z} from "zod";
-import {GlobalCommandInputSchama} from "./GlobalCommandInputSchama";
+import {GlobalCommandInputSchema} from "./GlobalCommandInputSchema";
 import {Command} from "commander";
 
-const DocsGenInputSchema = GlobalCommandInputSchama.extend({
+const DocsGenInputSchema = GlobalCommandInputSchema.extend({
     name: z.string().default('api').optional(),
     out: z.string().default('./docs').optional(),
     envFile: z.string().default('.env').optional()

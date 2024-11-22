@@ -3,11 +3,11 @@ import * as path from "node:path";
 import {makeDir, makeFile, srcPath} from "../util/pathUtils";
 import {isEmpty, upperFirst} from "lodash";
 import {logDone, logError, logRunning} from "../util/logger";
-import {GlobalCommandInputSchama} from "./GlobalCommandInputSchama";
+import {GlobalCommandInputSchema} from "./GlobalCommandInputSchema";
 import {z} from "zod";
 import {Command} from "commander";
 
-const MakeFlowInputSchema = GlobalCommandInputSchama.extend({
+const MakeFlowInputSchema = GlobalCommandInputSchema.extend({
     name: z.string().includes('/'),
     directory: z.string().default('flows'),
     stream: z.boolean().default(false).optional(),
@@ -60,41 +60,34 @@ ${addedExport}
 
 
 const flowTemplate = (flowName: string, pdata: z.infer<typeof MakeFlowInputSchema>) => `
-import { defineFlow } from "@genkit-ai/flow";
-import { z } from "zod";
+
+import { ai } from '@/ai/ai';
+import { z } from "genkit";
 
 // input schema
 export const UsersListFlowInputSchema = z.any();
-export type IUsersListFlowInputSchema = z.infer<
-    typeof UsersListFlowInputSchema
->;
+export type IUsersListFlowInputSchema = z.infer<typeof UsersListFlowInputSchema>;
 
 // output schema
 export const UsersListFlowOutputSchema = z.any();
-export type IUsersListFlowOutputSchema = z.infer<
-    typeof UsersListFlowOutputSchema
->;
+export type IUsersListFlowOutputSchema = z.infer<typeof UsersListFlowOutputSchema>;
 ${
     pdata.stream
         ? `// stream schema
 export const UsersListFlowStreamSchema = z.any();
-export type IUsersListFlowStreamSchema = z.infer<
-    typeof UsersListFlowStreamSchema
->;
+export type IUsersListFlowStreamSchema = z.infer<typeof UsersListFlowStreamSchema>;
 `
         : ``
 }
 
-export const usersListFlow = defineFlow(
+export const usersListFlow = ai.${pdata.stream ? 'defineStreamingFlow' : 'defineFlow'}(
     {
         name: "usersList",
         inputSchema: UsersListFlowInputSchema,
         outputSchema: UsersListFlowOutputSchema,
         ${pdata.stream ? `streamSchema: UsersListFlowStreamSchema,` : ""}
     },
-    async (input: IUsersListFlowInputSchema,${
-    pdata.stream ? `streamingCallback:any` : ``
-}) => {
+    async (input${pdata.stream ? `, streamingCallback` : ``}) => {
         // implementation
     },
 );

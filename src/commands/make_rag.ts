@@ -1,11 +1,11 @@
 import {logDone, logError, logRunning} from "../util/logger";
 import {makeDir, makeFile, srcPath} from "../util/pathUtils";
 import {z} from "zod";
-import {GlobalCommandInputSchama} from "./GlobalCommandInputSchama";
+import {GlobalCommandInputSchema} from "./GlobalCommandInputSchema";
 import {Command} from "commander";
 
 
-const CommandInputSchema = GlobalCommandInputSchama.extend({
+const CommandInputSchema = GlobalCommandInputSchema.extend({
     name: z.string(),
     type: z.enum(['firestore', 'local', 'simple']).default("local").optional(),
     limit: z.number().default(5).optional(),
