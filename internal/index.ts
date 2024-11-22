@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env tsx
 
 import {Command, Option} from "commander";
 import {make_command} from "./commands/make_command";

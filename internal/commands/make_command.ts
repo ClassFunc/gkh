@@ -1,3 +1,5 @@
+#!/usr/bin/env tsx
+
 import {Command} from "commander";
 import {logDone, logError, logRunning} from "../../src/util/logger";
 import {SafeParseReturnType, z} from "zod";
