@@ -5,7 +5,6 @@ import {isEmpty, upperFirst} from "lodash";
 import {logDone, logError} from "@/util/logger";
 import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 import {z} from "zod";
-import {Command} from "commander";
 import {getParsedData} from "@/util/commandParser";
 
 const MakeFlowInputSchema = GlobalCommandInputSchema.extend({
@@ -14,16 +13,8 @@ const MakeFlowInputSchema = GlobalCommandInputSchema.extend({
     stream: z.boolean().default(false).optional(),
 })
 
-export function make_flow(name: string, options: any, cmd: Command) {
-    // options = cmd.optsWithGlobals()
-    // logRunning(options)
-    // const parsed = MakeFlowInputSchema.safeParse({name, ...options})
-    // if (!parsed.success) {
-    //     logError(parsed.error.message)
-    //     return
-    // }
+export function make_flow() {
     const pdata = getParsedData(arguments, MakeFlowInputSchema)
-    console.log({pdata})
     const [name1, name2] = pdata.name.split("/");
     if (isEmpty(name2)) {
         logError("<name> should be separated by '/'");
