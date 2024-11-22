@@ -276,7 +276,7 @@ export function writeDocumentation(options: IDocsGenInputSchema) {
 
     // YAML equivalent
     let yamlContent = `
-# This doc generated at ${new Date().toLocaleString()} 
+# This doc is generated at ${new Date().toLocaleString()} 
 
 ${yaml.stringify(generatedContent)}
 `;

@@ -7,7 +7,7 @@ import {getParsedData} from "@/util/commandParser";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     name: z.string(),
-    type: z.enum(['firestore', 'simple', 'custom']).default("simple").optional(),
+    type: z.enum(['firestore', 'fsquery', 'simple', 'custom']).default("simple").optional(),
     limit: z.number().default(5).optional(),
     collection: z.string().default("yourFirestoreCollection").optional(),
     contentField: z.string().default("contentField").optional(),
@@ -28,6 +28,9 @@ export default function make_rag() {
         case 'firestore':
             code = FirestoreRAGCode(pdata)
             break;
+        case 'fsquery':
+            code = FSQueryRetrieverCode(pdata)
+            break;
         case 'simple':
             code = SimpleRAGCode(pdata)
             break;
@@ -38,7 +41,7 @@ export default function make_rag() {
             code = SimpleRAGCode(pdata)
             break;
     }
-    const writePath = srcPath(RAGS_DIR, `${pdata.name}.ts`)
+    const writePath = srcPath(RAGS_DIR, `${pdata.name}RAG.ts`)
     const done = makeFile(writePath, code, pdata.force)
     if (done) {
         logDone(writePath)
@@ -65,10 +68,11 @@ export const ${name}SimpleRetriever = ai.defineSimpleRetriever(
         // and several keys to use as metadata
         metadata: [],
     },
-    async (query, config) => {
+    async (query, config): Promise<any[]> => {
         let limit = config?.limit || ${limit}
         //implementation
         
+        return [];
     }
 );
 `
@@ -78,58 +82,199 @@ const FirestoreRAGCode = ({
                               collection,
                               contentField,
                               vectorField,
-                          }: ICommandInputSchema) => String.raw`
+                          }: ICommandInputSchema) => {
+    const fsName = name + `FS`
+    const retrieverName = fsName + `Retriever`
+    const indexerName = fsName + `Indexer`
+
+    return String.raw`
 import {defineFirestoreRetriever} from "@genkit-ai/firebase";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {textEmbedding004} from "@genkit-ai/vertexai";
-import {RetrieverParams} from "genkit";
+import {Document, RetrieverParams} from "genkit";
 import {z} from "genkit";
 import {ai} from "@/ai/ai";
+import {firestore} from "firebase-admin";
+import DocumentReference = firestore.DocumentReference;
+import DocumentSnapshot = firestore.DocumentSnapshot;
+import WriteResult = firestore.WriteResult;
 
 const db = getFirestore();
 
-const ${name}IndexConfig = {
+const indexConfig = {
     collection: "${collection}",
     contentField: "${contentField}",
     vectorField: "${vectorField || (contentField + `_embedding`)}",
     embedder: textEmbedding004, //
+    distanceResultField: '_distance'
 }
 
-export const ${name}FSRetriever = defineFirestoreRetriever(ai, {
-    name: "${name}FSRetriever",
+export const ${retrieverName} = defineFirestoreRetriever(ai, {
+    name: "${retrieverName}",
     firestore: db,
-    ...${name}IndexConfig,
+    ...indexConfig,
     distanceMeasure: "COSINE", // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
 });
 
-export const ${name}FSRetrieverRetrieve = (params: Omit<RetrieverParams, 'retriever'>) => {
+export const ${retrieverName}Retrieve = async (params: Omit<RetrieverParams, 'retriever'>):Promise<Document[]> => {
     return ai.retrieve({
         ...params,
-        retriever: ${name}FSRetriever,
+        retriever: ${retrieverName},
     })
 }
 
-async function ${name}FSIndexerAdd(chunks: string[]) {
-    for (const text of chunks) {
-        const vectorValue = await ai.embed({
-            embedder: ${name}IndexConfig.embedder,
-            content: text,
-        });
-        await db.collection(${name}IndexConfig.collection).add({
-            [${name}IndexConfig.vectorField]: FieldValue.vector(vectorValue),
-            [${name}IndexConfig.contentField]: text,
-        });
-    }
+export async function ${indexerName}Add(text: string, otherData: Record<string, any> = {}): Promise<DocumentReference> {
+    const vectorValue = await doEmbed(text);
+    return db.collection(indexConfig.collection).add({
+        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
+        [indexConfig.contentField]: text,
+        ...otherData
+    });
 }
 
+export async function ${indexerName}Update(doc: DocumentSnapshot, text: string, otherData: Record<string, any> = {}): Promise<WriteResult> {
+    const vectorValue = await doEmbed(text);
+    return doc.ref.set({
+        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
+        [indexConfig.contentField]: text,
+        ...otherData
+    }, {merge: true});
+}
+
+export async function ${indexerName}Batch(chunks: string[]): Promise<DocumentReference[]> {
+    return Promise.all(
+        chunks.map(async c => {
+            const vv = await doEmbed(c);
+            return db.collection(indexConfig.collection).add({
+                [indexConfig.vectorField]: FieldValue.vector(vv),
+                [indexConfig.contentField]: c,
+            });
+        })
+    )
+}
+
+${doEmbedCode()}
+
 `
+}
+
+const FSQueryRetrieverCode = ({
+                                  name,
+                                  limit = 5,
+                                  collection,
+                                  contentField,
+                                  vectorField,
+                              }: ICommandInputSchema) => {
+    const fsName = name + `FSQuery`
+    const retrieverName = fsName + `Retriever`
+    const indexerName = fsName + `Indexer`
+
+    return String.raw`
+import {defineFirestoreRetriever} from "@genkit-ai/firebase";
+import {FieldValue, getFirestore} from "firebase-admin/firestore";
+import {textEmbedding004} from "@genkit-ai/vertexai";
+import {Document} from "genkit";
+import {ai} from "@/ai/ai";
+import {firestore} from "firebase-admin";
+import Query = firestore.Query;
+import DocumentReference = firestore.DocumentReference;
+import DocumentSnapshot = firestore.DocumentSnapshot;
+import WriteResult = firestore.WriteResult;
+
+const db = getFirestore();
+
+const indexConfig = {
+    collection: "${collection}",
+    contentField: "${contentField}",
+    vectorField: "${vectorField || (contentField + `_embedding`)}",
+    embedder: textEmbedding004, //
+    metadata:[],
+    distanceResultField: '_distance',
+    distanceThreshold: 0.7
+}
+
+
+export const ${retrieverName} = defineFirestoreRetriever(ai, {
+    name: "${retrieverName}",
+    firestore: db,
+    ...indexConfig,
+    distanceMeasure: "COSINE", // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
+});
+
+export const ${retrieverName}Retrieve = async ({text, preFilterQuery}: { text: string, preFilterQuery: Query }) => {
+    const vectorValue = await doEmbed(text)
+    const snap = await preFilterQuery
+        .findNearest({
+            vectorField: indexConfig.vectorField,
+            queryVector: vectorValue,
+            limit: ${limit},
+            distanceMeasure: "COSINE",
+            distanceResultField: indexConfig.distanceResultField,
+            distanceThreshold: indexConfig.distanceThreshold
+        })
+        .get();
+
+    if (snap.empty)
+        return [];
+
+    return snap.docs.map((d) => {
+        const metadata: Record<string, any> = indexConfig.metadata.reduce(
+            (obj, key: string) => {
+                if (obj.hasOwnProperty(key)) {
+                    obj[key] = d.get(key)
+                }
+                return obj;
+            }
+            , {} as Record<string, any>
+        );
+        return Document.fromText(
+            d.get(indexConfig.contentField),
+            metadata
+        );
+    });
+}
+
+
+export async function ${indexerName}Add(text: string, otherData: Record<string, any> = {}): Promise<DocumentReference> {
+    const vectorValue = await doEmbed(text);
+    return db.collection(indexConfig.collection).add({
+        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
+        [indexConfig.contentField]: text,
+        ...otherData
+    });
+}
+
+export async function ${indexerName}Update(doc: DocumentSnapshot, text: string, otherData: Record<string, any> = {}): Promise<WriteResult> {
+    const vectorValue = await doEmbed(text);
+    return doc.ref.set({
+        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
+        [indexConfig.contentField]: text,
+        ...otherData
+    }, {merge: true});
+}
+
+export async function ${indexerName}Batch(chunks: string[]): Promise<DocumentReference[]> {
+    return Promise.all(
+        chunks.map(async c => {
+            const vv = await doEmbed(c);
+            return db.collection(indexConfig.collection).add({
+                [indexConfig.vectorField]: FieldValue.vector(vv),
+                [indexConfig.contentField]: c,
+            });
+        })
+    )
+}
+${doEmbedCode()}
+`
+}
 
 const customRetrieverCode = ({
                                  name,
                                  limit = 5
                              }: ICommandInputSchema) => {
     const retrieverName = `${name}Retriever`
-    return String.raw`import {CommonRetrieverOptionsSchema,} from 'genkit/retriever';
+    return String.raw`
+import {CommonRetrieverOptionsSchema} from 'genkit/retriever';
 import {z} from 'genkit';
 import {ai} from "@/ai/ai";
 
@@ -189,3 +334,11 @@ export const ${name}Indexer = devLocalIndexerRef(refName);
 export const ${name}Retriever = devLocalRetrieverRef(refName);
 
 `
+
+const doEmbedCode = () => {
+    return `
+const doEmbed = async (value: string): Promise<number[]> => {
+    return await ai.embed({embedder: indexConfig.embedder, content: value});
+}
+`
+}
