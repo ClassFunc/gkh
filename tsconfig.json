@@ -9,6 +9,7 @@
     "src/flows"
   ],
   "compilerOptions": {
+    "baseUrl": ".",
     "module": "commonjs",
     "noImplicitReturns": true,
     "outDir": "lib",
@@ -16,6 +17,11 @@
     "strict": true,
     "target": "es2017",
     "skipLibCheck": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    }
   }
 }

@@ -1,6 +1,6 @@
 import {logInfo, logRunning} from "../util/logger";
 import {z} from "zod";
-import {GlobalCommandInputSchema} from "./GlobalCommandInputSchema";
+import {GlobalCommandInputSchema} from "../types/GlobalCommandInputSchema";
 import {Command} from "commander";
 
 const DocsGenInputSchema = GlobalCommandInputSchema.extend({

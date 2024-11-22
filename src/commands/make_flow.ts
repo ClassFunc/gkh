@@ -3,7 +3,7 @@ import * as path from "node:path";
 import {makeDir, makeFile, srcPath} from "../util/pathUtils";
 import {isEmpty, upperFirst} from "lodash";
 import {logDone, logError, logRunning} from "../util/logger";
-import {GlobalCommandInputSchema} from "./GlobalCommandInputSchema";
+import {GlobalCommandInputSchema} from "../types/GlobalCommandInputSchema";
 import {z} from "zod";
 import {Command} from "commander";
 
