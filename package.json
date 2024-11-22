@@ -2,11 +2,11 @@
   "name": "gkh",
   "version": "1.1.9",
   "description": "genkit helper",
-  "main": "lib/index.js",
+  "main": "esbuild_out/index.js",
   "scripts": {
     "dev": "npx tsx src/index.ts",
-    "build": "rm -fr lib/ && npm run version:update && npx esbuild --bundle src/index.ts --outdir=esbuild_out  --platform=node --minify && npm run readme:update",
-    "start": "node lib/index.js",
+    "build": "rm -fr esbuild_out/ && npm run version:update && npx esbuild --bundle src/index.ts --outdir=esbuild_out  --platform=node --minify && npm run readme:update",
+    "start": "node esbuild_out/index.js",
     "readme:update": "export GKH_HELP_INFO_GEN=true && npx tsx scripts/readme_update.ts",
     "version:update": "npx tsx scripts/version_update.ts",
     "release:local": "npm run build && rm -f `dirname $(which node)`/gk && npm i -g && chmod +x `dirname $(which node)`/gk",
@@ -42,9 +42,6 @@
   "devDependencies": {
     "@types/lodash": "^4.17.13",
     "@types/node": "^22.9.0",
-    "tsc-alias": "^1.8.10",
-    "tsconfig-paths": "^4.2.0",
-    "tscpaths": "^0.0.9",
     "typescript": "^5.6.3"
   }
 }
