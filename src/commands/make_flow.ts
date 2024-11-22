@@ -1,9 +1,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import {makeDir, makeFile, srcPath} from "../util/pathUtils";
+import {makeDir, makeFile, srcPath} from "@/util/pathUtils";
 import {isEmpty, upperFirst} from "lodash";
-import {logDone, logError, logRunning} from "../util/logger";
-import {GlobalCommandInputSchema} from "../types/GlobalCommandInputSchema";
+import {logDone, logError, logRunning} from "@/util/logger";
+import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 import {z} from "zod";
 import {Command} from "commander";
 
@@ -61,7 +61,7 @@ ${addedExport}
 
 const flowTemplate = (flowName: string, pdata: z.infer<typeof MakeFlowInputSchema>) => `
 
-import { ai } from '@/ai/ai';
+import { ai } from '@ai/ai';
 import { z } from "genkit";
 
 // input schema

@@ -5,9 +5,9 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import {configDotenv} from "dotenv";
 import {upperFirst} from "lodash";
-import {libFlowsPath} from "../util/pathUtils";
-import {logRunning, logWarning} from "../util/logger";
-import {IDocsGenInputSchema} from "../commands/docs_gen";
+import {libFlowsPath} from "@/util/pathUtils";
+import {logRunning, logWarning} from "@/util/logger";
+import {IDocsGenInputSchema} from "@/commands/docs_gen";
 
 extendZodWithOpenApi(z);
 

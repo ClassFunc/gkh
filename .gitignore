@@ -11,3 +11,4 @@
 gkh
 ./src/flows/**/*
 lib/
+esbuild_out/

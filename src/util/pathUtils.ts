@@ -1,7 +1,7 @@
 import * as path from "node:path";
 import * as fs from "node:fs";
 import {logError, logWarning} from "./logger";
-import {exec} from "node:child_process";
+import {execSync} from "node:child_process";
 
 function getCwd(...p: string[]): string {
     const cwd = process.cwd();
@@ -54,7 +54,7 @@ export function libFlowsPath(): string {
     if (!checkDirectoryExists(d)) {
         try {
             logWarning("./lib not found; try building with `npm run build`")
-            exec(`npm run build`);
+            execSync(`npm run build`);
         } catch (e) {
             logError(e)
             throw e;

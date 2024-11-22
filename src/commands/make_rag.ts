@@ -1,7 +1,7 @@
-import {logDone, logError, logRunning} from "../util/logger";
-import {makeDir, makeFile, srcPath} from "../util/pathUtils";
+import {logDone, logError, logRunning} from "@/util/logger";
+import {makeDir, makeFile, srcPath} from "@/util/pathUtils";
 import {z} from "zod";
-import {GlobalCommandInputSchema} from "../types/GlobalCommandInputSchema";
+import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 import {Command} from "commander";
 
 

@@ -6,7 +6,7 @@
   "exclude": [
     ".tmp/*",
     "./.tmp/*",
-    "src/flows"
+    "node_modules"
   ],
   "compilerOptions": {
     "baseUrl": ".",

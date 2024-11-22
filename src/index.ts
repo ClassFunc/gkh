@@ -67,7 +67,6 @@ gkhProgram
     .description("generate a rag")
     .action(make_rag);
 
-
 // NEXT_COMMAND__DONOTREMOVETHISLINE
 
 if (!process.env.GKH_HELP_INFO_GEN) {

@@ -6,6 +6,7 @@
 
 ## Main functions
 
+- [x] [make:ai - make ai instance](#make:ai)
 - [x] [docs:gen - generate openapi documents](#docs:gen)
 - [x] [make:flow - generate a flow](#make:flow)
 - [x] [make:rag - generate a rag](#make:rag)
@@ -21,6 +22,18 @@ npm i -g gkh
 # then starting use `gk` or `gkh` command on your top of genkit project
 ```
 
+
+### <a id="make:ai">make:ai</a>
+```
+Usage:  make:ai [options]
+
+make ai instance
+
+Options:
+  -n, --name <name>  name of ai instance (default: "ai")
+  -h, --help         display help for command
+
+```
 
 ### <a id="docs:gen">docs:gen</a>
 ```

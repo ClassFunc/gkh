@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {GlobalCommandInputSchema} from "../types/GlobalCommandInputSchema";
+import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({

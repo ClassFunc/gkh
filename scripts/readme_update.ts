@@ -13,11 +13,11 @@ import {execSync} from "node:child_process";
 // }
 
 (async function readme_gen() {
-    if (!existsSync('lib')) {
-        logRunning("building for lib/ ...")
-        execSync(`npm run build`);
-        logDone()
-    }
+    // if (!existsSync('lib')) {
+    //     logRunning("building for lib/ ...")
+    //     execSync(`npm run build`);
+    //     logDone()
+    // }
     const {gkhProgram} = await import('../src/index')
     const mainFunctions = gkhProgram.commands.map(
         c => `- [x] [${c.name()} - ${c.description()}](#${c.name()})`
