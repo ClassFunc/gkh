@@ -62,7 +62,7 @@ Arguments:
   name                                rag name; ex: menuQA
 
 Options:
-  -t, --type [type]                   type of vectorstore; supported 'firestore', 'local', 'simple' (default: "local")
+  -t, --type [type]                   type of vectorstore; supported 'firestore', 'simple', 'custom'  (default: "simple")
   -l, --limit [limit]                 retriever's limit; default: 5
   -c, --collection [collection]       firestore collection (default: "yourFirestoreCollection")
   -cf, --contentField [contentField]  contentField (default: "contentField")

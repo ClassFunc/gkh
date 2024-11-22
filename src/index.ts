@@ -43,7 +43,7 @@ gkhProgram
     .argument("<name>", "rag name; ex: menuQA")
     .option(
         "-t, --type [type]",
-        "type of vectorstore; supported 'firestore', 'simple'",
+        "type of vectorstore; supported 'firestore', 'simple', 'custom' ",
         "simple",
     )
     .option("-l, --limit [limit]", "retriever's limit; default: 5", parseInt)
