@@ -9,6 +9,8 @@
 - [x] [docs:gen - generate openapi documents](#docs:gen)
 - [x] [make:flow - generate a flow](#make:flow)
 - [x] [make:rag - generate a rag](#make:rag)
+- [x] [make:tool - make:tool](#make:tool)
+- [x] [make:prompt - make:prompt](#make:prompt)
 
 - [ ] Others things... (welcome any issue or PR)
 
@@ -68,6 +70,38 @@ Options:
   -cf, --contentField [contentField]  contentField (default: "contentField")
   -vf, --vectorField [vectorField]    vectorField; default: $contentField + '_' + embedder.name (default: "")
   -h, --help                          display help for command
+
+```
+
+### <a id="make:tool">make:tool</a>
+```
+Usage: gkh make:tool [options] <name>
+
+make:tool
+
+Arguments:
+  name                             tool name
+
+Options:
+  -d, --description [description]  tool description (default: "useful for...")
+  -h, --help                       display help for command
+
+```
+
+### <a id="make:prompt">make:prompt</a>
+```
+Usage: gkh make:prompt [options] <name>
+
+make:prompt
+
+Arguments:
+  name                             prompt name
+
+Options:
+  -d, --description [description]  prompt description (default: "")
+  -v, --variant [variant]          variant (default: "")
+  -m, --model [model]              model (default: "")
+  -h, --help                       display help for command
 
 ```
 

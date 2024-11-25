@@ -8,6 +8,8 @@ import {VERSION} from "./version";
 
 import {make_tool} from "@/commands/make_tool";
 
+import {make_prompt} from "@/commands/make_prompt";
+
 // ENDS_IMPORT_DONOTREMOVETHISLINE
 const gkhProgram = new Command();
 
@@ -63,11 +65,25 @@ gkhProgram
     .description("generate a rag")
     .action(make_rag);
 
-gkhProgram.command("make:tool")
+gkhProgram
+    .command("make:tool")
     .description("make:tool")
     .argument("name", "tool name")
-    .option("-d, --description [description]", "tool description", "useful for...")
+    .option(
+        "-d, --description [description]",
+        "tool description",
+        "useful for...",
+    )
     .action(make_tool);
+
+gkhProgram
+    .command("make:prompt")
+    .description("make:prompt")
+    .argument("name", "prompt name")
+    .option("-d, --description [description]", "prompt description", "")
+    .option("-v, --variant [variant]", "variant", "")
+    .option("-m, --model [model]", "model", "")
+    .action(make_prompt);
 
 // NEXT_COMMAND__DONOTREMOVETHISLINE
 
