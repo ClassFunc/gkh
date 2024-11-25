@@ -1,16 +1,17 @@
 #!/usr/bin/env tsx
 
 import {Command} from "commander";
-import {logDone, logError, logRunning} from "../../src/util/logger";
+import {logDone, logError, logRunning, logWarning} from "../../src/util/logger";
 import {SafeParseReturnType, z} from "zod";
 import {srcPath} from "../../src/util/pathUtils";
 import * as path from "node:path";
-import {readFileSync, writeFileSync} from "node:fs";
+import {existsSync, readFileSync, writeFileSync} from "node:fs";
 import {execSync} from "child_process";
 
 const CommandInputSchema = z.object({
     name: z.string().includes(":"),
-    path: z.string().default(srcPath('commands'))
+    path: z.string().default(srcPath('commands')),
+    force: z.boolean().default(false).optional()
 })
 type ICommandInput = z.infer<typeof CommandInputSchema>
 
@@ -30,7 +31,18 @@ export function make_command() {
     const data = parsed.data
     const fPath = path.join(data.path, data.name.replace(':', '_')) + `.ts`
     const code = commandTsCode(data)
-    writeFileSync(fPath, code)
+
+    let codeWriteDone = false;
+    if (existsSync(fPath) && !data.force) {
+        logWarning(`${fPath} file exists. use --force to over-write`)
+    } else {
+        writeFileSync(fPath, code)
+        codeWriteDone = true
+    }
+    if (!codeWriteDone) {
+        logWarning(`...skipped.`)
+        return;
+    }
 
     const {importCode, commandCode} = appendedIndexCode(data)
 
@@ -38,45 +50,55 @@ export function make_command() {
     const newIndexCode = readFileSync(idxFPath).toString()
         .replace(`// ENDS_IMPORT_DONOTREMOVETHISLINE`, importCode + `\n// ENDS_IMPORT_DONOTREMOVETHISLINE`)
         .replace(`// NEXT_COMMAND__DONOTREMOVETHISLINE`, commandCode + `\n// NEXT_COMMAND__DONOTREMOVETHISLINE`)
+
     writeFileSync(idxFPath, newIndexCode)
     logRunning(`prettiering ${idxFPath}`)
     execSync(`npx prettier --write ${idxFPath}`)
 
-    logDone(fPath)
+    logDone("make_command done:", fPath)
 }
 
 
-const commandTsCode = (data: SafeParseReturnType<ICommandInput, ICommandInput>['data']) => {
+const commandTsCode = (data: ICommandInput) => {
     data = data!
     const fnName = data.name.replace(':', '_')
     return `
-import {SafeParseReturnType, z} from "zod";
+import {z} from "zod";
 import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
-import {getParsedData} from "@/util/commandParser";
+import {getCommandInputDeclarationCode, getParsedData} from "@/util/commandParser";
 
-const CommandInputSchema = GlobalCommandInputSchema.extend({})
+const CommandInputSchema = GlobalCommandInputSchema.extend({
+    // from commander;
+    
+})
+
 type ICommandInput = z.infer<typeof CommandInputSchema>;
+let commandInputDeclarationCode = '';
 
 export function ${fnName}() {
     const data = getParsedData(arguments, CommandInputSchema)
+    commandInputDeclarationCode = getCommandInputDeclarationCode(data);
     const code = get_code(data)
     // implementations
     
 }
 
-export function get_code(data: SafeParseReturnType<ICommandInput, ICommandInput>['data']) {
+export function get_code(data: ICommandInput) {
     // work with input
-    
+
     return \`
-    
+import {ai} from "@/ai/ai";
+
+\${commandInputDeclarationCode}
+
+// other codes...
 \`;
 }
-
 
 `
 }
 
-const appendedIndexCode = (data: SafeParseReturnType<ICommandInput, ICommandInput>['data']) => {
+const appendedIndexCode = (data: ICommandInput) => {
     data = data!
     const fname = data.name.replace(":", "_")
     const importCode = `import {${fname}} from '@/commands/${fname}';\n`

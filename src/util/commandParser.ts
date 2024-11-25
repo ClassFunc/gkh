@@ -36,3 +36,14 @@ export const getParsedData = <S extends z.ZodType>(args: any, schema: S) => {
     }
     return parsed.data! as z.infer<typeof schema>;
 }
+
+export const getCommandInputDeclarationCode = (data: any): string => {
+    let entries: string[] = []
+    for (const [k, val] of Object.entries(data)) {
+        if (k === 'force') {
+            continue;
+        }
+        entries.push(`const $${k} = ${JSON.stringify(val)};`)
+    }
+    return "\n" + entries.join("\n");
+}
