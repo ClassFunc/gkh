@@ -6,6 +6,8 @@ import {make_flow} from "./commands/make_flow";
 import make_rag from "./commands/make_rag";
 import {VERSION} from "./version";
 
+import {make_tool} from "@/commands/make_tool";
+
 // ENDS_IMPORT_DONOTREMOVETHISLINE
 const gkhProgram = new Command();
 
@@ -61,6 +63,11 @@ gkhProgram
     .description("generate a rag")
     .action(make_rag);
 
+gkhProgram.command("make:tool")
+    .description("make:tool")
+    .argument("name", "tool name")
+    .option("-d, --description [description]", "tool description", "useful for...")
+    .action(make_tool);
 
 // NEXT_COMMAND__DONOTREMOVETHISLINE
 
