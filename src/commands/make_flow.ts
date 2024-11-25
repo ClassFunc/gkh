@@ -54,7 +54,7 @@ ${addedExport}
 
 const flowTemplate = (flowName: string, pdata: z.infer<typeof MakeFlowInputSchema>) => `
 
-import { ai } from '@ai/ai';
+import { ai } from '@/ai/ai';
 import { z } from "genkit";
 
 // input schema
