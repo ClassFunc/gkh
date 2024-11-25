@@ -10,6 +10,8 @@ import {make_tool} from "@/commands/make_tool";
 
 import {make_prompt} from "@/commands/make_prompt";
 
+import {make_reranker} from "@/commands/make_reranker";
+
 // ENDS_IMPORT_DONOTREMOVETHISLINE
 const gkhProgram = new Command();
 
@@ -84,6 +86,13 @@ gkhProgram
     .option("-v, --variant [variant]", "variant", "")
     .option("-m, --model [model]", "model", "")
     .action(make_prompt);
+
+gkhProgram
+    .command("make:reranker")
+    .description("make:reranker")
+    .argument("name", "reranker name")
+    .option("k, --topK [topK]", "topK; default 10", parseInt, 10)
+    .action(make_reranker);
 
 // NEXT_COMMAND__DONOTREMOVETHISLINE
 

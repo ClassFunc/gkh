@@ -7,21 +7,19 @@ import {logDone} from "@/util/logger";
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
     name: z.string(),
-    description: z.string().default(""),
-    variant: z.string().default(""),
-    model: z.string().default(""),
+    topK: z.number().max(1000).default(10).optional()
 })
 
 type ICommandInput = z.infer<typeof CommandInputSchema>;
 let commandInputDeclarationCode = '';
-const PROMPTS_DIR = 'prompts';
+const RERANKERS_DIR = 'rerankers';
 
-export function make_prompt() {
+export function make_reranker() {
     const data = getParsedData(arguments, CommandInputSchema)
     commandInputDeclarationCode = getCommandInputDeclarationCode(data);
     const code = get_code(data)
     // implementations
-    const writeTo = srcPath(PROMPTS_DIR, data.name + "Prompt.ts")
+    const writeTo = srcPath(RERANKERS_DIR, data.name + "Reranker.ts")
     const done = makeFile(writeTo, code, data.force)
     if (done) {
         logDone(writeTo)
@@ -37,25 +35,20 @@ import {z} from "genkit";
 
 ${commandInputDeclarationCode}
 
-export const ${data.name}Prompt = ai.definePrompt(
-    {
-        name: $name + "Prompt",
-        description: $description,
-        variant: $variant,
-        model: $model || ai.options.model,
-        tools: [],
-        input: {
-            schema: z.object({
-                //props
-            })
-        },
-        output: {
-            schema: z.any()
-        }
-    },
-    'You are a helpful AI assistant. {{props}} ...'
+export const ${data.name}Reranker = ai.defineReranker(
+  {
+    name: 'custom/'+ $name + 'Reranker',
+    configSchema: z.object({
+      k: z.number().default($topK).optional(),
+    }),
+  },
+  // @ts-ignore
+  async (query, documents, options) => {
+    // Your custom reranking logic here
+    
+  }
 );
-// other codes...
+
 `;
 }
 

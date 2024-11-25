@@ -11,6 +11,7 @@
 - [x] [make:rag - generate a rag](#make:rag)
 - [x] [make:tool - make:tool](#make:tool)
 - [x] [make:prompt - make:prompt](#make:prompt)
+- [x] [make:reranker - make:reranker](#make:reranker)
 
 - [ ] Others things... (welcome any issue or PR)
 
@@ -102,6 +103,21 @@ Options:
   -v, --variant [variant]          variant (default: "")
   -m, --model [model]              model (default: "")
   -h, --help                       display help for command
+
+```
+
+### <a id="make:reranker">make:reranker</a>
+```
+Usage: gkh make:reranker [options] <name>
+
+make:reranker
+
+Arguments:
+  name              reranker name
+
+Options:
+  k, --topK [topK]  topK; default 10 (default: 10)
+  -h, --help        display help for command
 
 ```
 
