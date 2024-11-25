@@ -24,8 +24,8 @@ npm i -g gkh
 # then starting use `gk` or `gkh` command on your top of genkit project
 ```
 
-
 ### <a id="docs:gen">docs:gen</a>
+
 ```
 Usage: gkh docs:gen [options]
 
@@ -40,6 +40,7 @@ Options:
 ```
 
 ### <a id="make:flow">make:flow</a>
+
 ```
 Usage: gkh make:flow [options] <name>
 
@@ -56,6 +57,7 @@ Options:
 ```
 
 ### <a id="make:rag">make:rag</a>
+
 ```
 Usage: gkh make:rag [options] <name>
 
@@ -75,6 +77,7 @@ Options:
 ```
 
 ### <a id="make:tool">make:tool</a>
+
 ```
 Usage: gkh make:tool [options] <name>
 
@@ -90,6 +93,7 @@ Options:
 ```
 
 ### <a id="make:prompt">make:prompt</a>
+
 ```
 Usage: gkh make:prompt [options] <name>
 
@@ -107,17 +111,18 @@ Options:
 ```
 
 ### <a id="make:reranker">make:reranker</a>
+
 ```
 Usage: gkh make:reranker [options] <name>
 
 make:reranker
 
 Arguments:
-  name              reranker name
+  name               reranker name
 
 Options:
-  k, --topK [topK]  topK; default 10 (default: 10)
-  -h, --help        display help for command
+  -k, --topK [topK]  topK; default 10 (default: 10)
+  -h, --help         display help for command
 
 ```
 
@@ -128,19 +133,20 @@ Options:
 - A: please add this lines to your `src/index.ts`:
 
 ```ts
-// configureGenkit({}) ... 
+// configureGenkit({}) ...
 
 // read all flows in `src/flows` folder
-const libFlowsPath = path.join(__dirname, "flows")
-fs.readdirSync(libFlowsPath)
-    .forEach(name => {
-        const flowDir = path.join(libFlowsPath, name)
-        try {
-            require(path.join(flowDir, "flows")) // require flows.ts
-        } catch (e) {
-            console.warn("flow folder `" + name + "`shoud contains flows.ts or flows.js")
-        }
-    })
+const libFlowsPath = path.join(__dirname, "flows");
+fs.readdirSync(libFlowsPath).forEach((name) => {
+  const flowDir = path.join(libFlowsPath, name);
+  try {
+    require(path.join(flowDir, "flows")); // require flows.ts
+  } catch (e) {
+    console.warn(
+      "flow folder `" + name + "`shoud contains flows.ts or flows.js",
+    );
+  }
+});
 
 // startFlowsServer();
 ```

@@ -83,7 +83,7 @@ export function ${fnName}() {
     
 }
 
-export function get_code(data: ICommandInput) {
+function get_code(data: ICommandInput) {
     // work with input
 
     return \`

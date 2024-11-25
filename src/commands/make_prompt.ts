@@ -22,13 +22,13 @@ export function make_prompt() {
     const code = get_code(data)
     // implementations
     const writeTo = srcPath(PROMPTS_DIR, data.name + "Prompt.ts")
-    const done = makeFile(writeTo, code, data.force)
+    const done = makeFile(writeTo, code, data.force, true)
     if (done) {
         logDone(writeTo)
     }
 }
 
-export function get_code(data: ICommandInput) {
+function get_code(data: ICommandInput) {
     // work with input
 
     return `
@@ -46,14 +46,14 @@ export const ${data.name}Prompt = ai.definePrompt(
         tools: [],
         input: {
             schema: z.object({
-                //props
+                //prop1
             })
         },
         output: {
             schema: z.any()
         }
     },
-    'You are a helpful AI assistant. {{props}} ...'
+    \`You are a helpful AI assistant. {{prop1}} ...\`
 );
 // other codes...
 `;

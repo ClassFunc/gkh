@@ -91,7 +91,7 @@ gkhProgram
     .command("make:reranker")
     .description("make:reranker")
     .argument("name", "reranker name")
-    .option("k, --topK [topK]", "topK; default 10", parseInt, 10)
+    .option("-k, --topK [topK]", "topK; default 10", parseInt, 10)
     .action(make_reranker);
 
 // NEXT_COMMAND__DONOTREMOVETHISLINE

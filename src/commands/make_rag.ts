@@ -45,7 +45,7 @@ export default function make_rag() {
             break;
     }
     const writePath = srcPath(RAGS_DIR, `${pdata.name}RAG.ts`)
-    const done = makeFile(writePath, code, pdata.force)
+    const done = makeFile(writePath, code, pdata.force, true)
     if (done) {
         logDone(writePath)
     }

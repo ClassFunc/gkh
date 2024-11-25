@@ -25,7 +25,8 @@ export function makeDir(p: string, recursive = true): boolean {
 
 export function makeFile(fp: string,
                          content: any,
-                         force = false
+                         force = false,
+                         doPrettier = true,
 ): boolean {
     const ok = makeDir(path.dirname(fp))
     if (!ok) {
@@ -38,6 +39,9 @@ export function makeFile(fp: string,
         return false;
     }
     fs.writeFileSync(fp, content, {encoding: 'utf-8'})
+    if (doPrettier) {
+        execSync(`npx prettier --write ${fp}`)
+    }
     return true;
 }
 

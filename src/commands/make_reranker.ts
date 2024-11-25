@@ -20,7 +20,7 @@ export function make_reranker() {
     const code = get_code(data)
     // implementations
     const writeTo = srcPath(RERANKERS_DIR, data.name + "Reranker.ts")
-    const done = makeFile(writeTo, code, data.force)
+    const done = makeFile(writeTo, code, data.force, true)
     if (done) {
         logDone(writeTo)
     }
