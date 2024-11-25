@@ -9,7 +9,7 @@ const log = (...v: any) => {
 };
 
 const logDone = (...v: any[]) => {
-    log("<<✅ ", successColor, ...v, endsColor);
+    log("<<✅", successColor, ...v, endsColor);
 };
 
 const logError = (...v: any[]) => {

@@ -1,61 +1,50 @@
 #!/usr/bin/env tsx
 
-import {Command} from "commander";
-import {logDone, logError, logRunning, logWarning} from "../../src/util/logger";
-import {SafeParseReturnType, z} from "zod";
-import {srcPath} from "../../src/util/pathUtils";
+import {logDone, logWarning} from "../../src/util/logger";
+import {z} from "zod";
+import {makeFile, srcPath} from "../../src/util/pathUtils";
 import * as path from "node:path";
-import {existsSync, readFileSync, writeFileSync} from "node:fs";
-import {execSync} from "child_process";
+import {existsSync, readFileSync} from "node:fs";
+import {getParsedData} from "../../src/util/commandParser";
+import {GlobalCommandInputSchema} from "../../src/types/GlobalCommandInputSchema";
 
-const CommandInputSchema = z.object({
+const CommandInputSchema = GlobalCommandInputSchema.extend({
     name: z.string().includes(":"),
-    path: z.string().default(srcPath('commands')),
-    force: z.boolean().default(false).optional()
+    path: z.string().default(srcPath('commands'))
 })
 type ICommandInput = z.infer<typeof CommandInputSchema>
 
 export function make_command() {
-    const cmd = Object.values(arguments).filter(v => v instanceof Command)[0];
-    if (!cmd) {
-        logError(`no command found`)
-        return;
-    }
-    const options = cmd.optsWithGlobals()
-    logRunning(options)
-    const parsed = CommandInputSchema.safeParse(options)
-    if (parsed.error) {
-        logError(parsed.error)
-        return;
-    }
-    const data = parsed.data
+    const data = getParsedData(arguments, CommandInputSchema)
     const fPath = path.join(data.path, data.name.replace(':', '_')) + `.ts`
     const code = commandTsCode(data)
 
-    let codeWriteDone = false;
     if (existsSync(fPath) && !data.force) {
         logWarning(`${fPath} file exists. use --force to over-write`)
-    } else {
-        writeFileSync(fPath, code)
-        codeWriteDone = true
-    }
-    if (!codeWriteDone) {
         logWarning(`...skipped.`)
         return;
+    } else {
+        const makeFpathDone = makeFile(fPath, code, data.force)
+        if (makeFpathDone) {
+            logDone(fPath)
+        }
     }
 
     const {importCode, commandCode} = appendedIndexCode(data)
 
     const idxFPath = srcPath('index.ts')
-    const newIndexCode = readFileSync(idxFPath).toString()
-        .replace(`// ENDS_IMPORT_DONOTREMOVETHISLINE`, importCode + `\n// ENDS_IMPORT_DONOTREMOVETHISLINE`)
-        .replace(`// NEXT_COMMAND__DONOTREMOVETHISLINE`, commandCode + `\n// NEXT_COMMAND__DONOTREMOVETHISLINE`)
 
-    writeFileSync(idxFPath, newIndexCode)
-    logRunning(`prettiering ${idxFPath}`)
-    execSync(`npx prettier --write ${idxFPath}`)
-
-    logDone("make_command done:", fPath)
+    let indexTsContent = readFileSync(idxFPath).toString()
+    if (!indexTsContent.replace(/\s/g, '').includes(importCode.replace(/\s/g, ''))) {
+        indexTsContent = indexTsContent.replace(`// ENDS_IMPORT_DONOTREMOVETHISLINE`, importCode + `\n// ENDS_IMPORT_DONOTREMOVETHISLINE`)
+    }
+    if (!indexTsContent.replace(/\s/g, '').includes(commandCode.replace(/\s/g, ''))) {
+        indexTsContent = indexTsContent.replace(`// NEXT_COMMAND__DONOTREMOVETHISLINE`, commandCode + `\n// NEXT_COMMAND__DONOTREMOVETHISLINE`)
+    }
+    const writeCmdDone = makeFile(idxFPath, indexTsContent, true)
+    if (writeCmdDone) {
+        logDone(idxFPath)
+    }
 }
 
 
@@ -101,7 +90,7 @@ import {ai} from "@/ai/ai";
 const appendedIndexCode = (data: ICommandInput) => {
     data = data!
     const fname = data.name.replace(":", "_")
-    const importCode = `import {${fname}} from '@/commands/${fname}';\n`
+    const importCode = `import {${fname}} from "@/commands/${fname}"`
     const commandCode = `
 gkhProgram
     .command("${data.name}")

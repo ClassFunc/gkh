@@ -1,89 +1,112 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-import {makeDir, makeFile, srcPath} from "@/util/pathUtils";
-import {isEmpty, upperFirst} from "lodash";
-import {logDone, logError} from "@/util/logger";
-import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 import {z} from "zod";
-import {getParsedData} from "@/util/commandParser";
+import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
+import {getCommandInputDeclarationCode, getParsedData} from "@/util/commandParser";
+import {makeFile, srcPath} from "@/util/pathUtils";
+import {existsSync, readFileSync} from "node:fs";
+import {camelCase} from "lodash";
+import {logDone} from "@/util/logger";
 
-const MakeFlowInputSchema = GlobalCommandInputSchema.extend({
-    name: z.string().includes('/'),
-    directory: z.string().default('flows'),
-    stream: z.boolean().default(false).optional(),
+const CommandInputSchema = GlobalCommandInputSchema.extend({
+    // from commander;
+    name: z.string().includes("/"),
+    stream: z.boolean().default(false).optional()
 })
 
+type ICommandInput = z.infer<typeof CommandInputSchema>;
+let commandInputDeclarationCode = '';
+const FLOWS_DIR = "flows";
+
 export function make_flow() {
-    const pdata = getParsedData(arguments, MakeFlowInputSchema)
-    const [name1, name2] = pdata.name.split("/");
-    if (isEmpty(name2)) {
-        logError("<name> should be separated by '/'");
-        return;
-    }
-    const flowDir = srcPath(pdata.directory, name1);
-    const flowDirFlowsTs = path.join(flowDir, "flows.ts");
-    if (!fs.existsSync(flowDirFlowsTs)) {
-        makeFile(flowDirFlowsTs, ``)
+    const data = getParsedData(arguments, CommandInputSchema)
+    commandInputDeclarationCode = getCommandInputDeclarationCode(data);
+    const [name1, name2] = data.name.split("/");
+    const flowName = camelCase(data.name.replace("/", "_") + "Flow");
+
+    let code = ""
+    if (data.stream) {
+        code = get_code_streaming(data, flowName)
+    } else {
+        code = get_code_none_stream(data, flowName)
     }
 
-    const subFlowDir = path.join(flowDir, "flows");
-    const flowName = `${name1}${upperFirst(name2)}`;
-    makeDir(subFlowDir)
-    const subFlowDirTs = path.join(subFlowDir, `${flowName}.ts`);
-    makeFile(
-        subFlowDirTs,
-        flowTemplate(flowName, pdata),
-        pdata.force
-    );
-
-    // export
-    const addedExport = `export { ${flowName}Flow } from './flows/${flowName}'`;
-    const tsContent = fs.readFileSync(flowDirFlowsTs);
-
-    if (!tsContent.includes(addedExport)) {
-        fs.writeFileSync(
-            flowDirFlowsTs,
-            tsContent + `
-${addedExport}
-`,
-        );
+    const flowWriteTo = srcPath(FLOWS_DIR, name1, 'flows', `${flowName}.ts`)
+    const exportWriteTo = srcPath(FLOWS_DIR, name1, "flows.ts")
+    const doneWriteFlow = makeFile(flowWriteTo, code, data.force)
+    if (doneWriteFlow) {
+        logDone(flowWriteTo)
+        if (!existsSync(exportWriteTo)) {
+            makeFile(exportWriteTo, "")
+        }
+        let flowTsContent = readFileSync(exportWriteTo).toString()
+        const exportCode = `export {${flowName}} from "./flows/${flowName}"`
+        if (!flowTsContent.replace(/\s/g, "").includes(exportCode.replace(/\s/g, ""))) {
+            flowTsContent += `\n` + exportCode
+            const doneWriteExport = makeFile(exportWriteTo, flowTsContent, data.force)
+            if (doneWriteExport) {
+                logDone(exportWriteTo)
+            }
+        }
     }
-    logDone(subFlowDirTs)
+
 }
 
+function get_code_streaming(data: ICommandInput, flowName: string) {
+    // work with input
+    return `
+import {ai} from "@/ai/ai";
+import {z} from "genkit";
 
-const flowTemplate = (flowName: string, pdata: z.infer<typeof MakeFlowInputSchema>) => `
+${commandInputDeclarationCode}
 
-import { ai } from '@/ai/ai';
-import { z } from "genkit";
-
-// input schema
-export const UsersListFlowI = z.any();
-export type IUsersListFlowI = z.infer<typeof UsersListFlowI>;
-
-// output schema
-export const UsersListFlowO = z.any();
-export type IUsersListFlowO = z.infer<typeof UsersListFlowO>;
-${
-    pdata.stream
-        ? `// stream schema
-export const UsersListFlowS = z.any();
-export type IUsersListFlowS = z.infer<typeof UsersListFlowS>;
-`
-        : ``
-}
-
-export const usersListFlow = ai.${pdata.stream ? 'defineStreamingFlow' : 'defineFlow'}(
+export const ${flowName} = ai.defineStreamingFlow(
     {
-        name: "usersList",
-        inputSchema: UsersListFlowI,
-        outputSchema: UsersListFlowO,
-        ${pdata.stream ? `streamSchema: UsersListFlowS` : ""}
+        name: "${flowName}",
+        inputSchema: z.object({
+            query: z.string()
+        }),
+        outputSchema: z.any(),
+        streamSchema: z.any()
     },
-    async (input${pdata.stream ? `, streamingCallback` : ``}) => {
+    async (input, streamingCallback) => {
         // implementation
-    },
+        const {response, stream} = await ai.generateStream({
+            prompt: input.query,
+        })
+        for await (const chunk of stream) {
+            if (streamingCallback) {
+                streamingCallback(chunk.text)
+            }
+        }
+        return await response;
+    }
 );
-`
-    .replace(/usersList/g, flowName)
-    .replace(/UsersList/g, upperFirst(flowName));
+
+`;
+}
+
+
+function get_code_none_stream(data: ICommandInput, flowName: string) {
+    return `
+import {ai} from "@/ai/ai";
+import {z} from "genkit";
+
+${commandInputDeclarationCode}
+
+export const ${flowName} = ai.defineFlow(
+    {
+        name: "${flowName}",
+        inputSchema: z.object({
+            query: z.string()
+        }),
+        outputSchema: z.any(),
+    },
+    async (input) => {
+        // implementation
+        const response = await ai.generate({
+            prompt: input.query,
+        })
+
+        return response.text;
+    }
+);`
+}
