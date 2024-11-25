@@ -7,7 +7,7 @@ import {getParsedData} from "@/util/commandParser";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     name: z.string(),
-    type: z.enum(['fs', 'fsquery', 'simple', 'custom']).default("simple").optional(),
+    type: z.enum(['fs', 'fsquery', 'simple', 'local', 'custom']).default("simple").optional(),
     limit: z.number().default(5).optional(),
     collection: z.string().default("yourFirestoreCollection").optional(),
     contentField: z.string().default("contentField").optional(),
@@ -16,15 +16,18 @@ const CommandInputSchema = GlobalCommandInputSchema.extend({
 type ICommandInputSchema = z.infer<typeof CommandInputSchema>
 
 const RAGS_DIR = "rags";
+let RAGConsoleInputDeclarationCode = ''
 
 export default function make_rag() {
 
     const pdata = getParsedData(arguments, CommandInputSchema)
+    RAGConsoleInputDeclarationCode = getRAGConsoleInputDeclarationCode(pdata);
+
     let code: string
     switch (pdata.type) {
-        // case 'local':
-        //     code = LocalVectorRAGCode(pdata)
-        //     break;
+        case 'local':
+            code = LocalVectorRAGCode(pdata)
+            break;
         case 'fs':
             code = FirestoreRAGCode(pdata)
             break;
@@ -35,7 +38,7 @@ export default function make_rag() {
             code = SimpleRAGCode(pdata)
             break;
         case 'custom':
-            code = customRetrieverCode(pdata)
+            code = CustomRetrieverCode(pdata)
             break;
         default:
             code = SimpleRAGCode(pdata)
@@ -48,35 +51,79 @@ export default function make_rag() {
     }
 }
 
+const getRAGConsoleInputDeclarationCode = (pdata: ICommandInputSchema) => {
+    let entries: string[] = []
+    for (const [k, val] of Object.entries(pdata)) {
+        if (k === 'force') {
+            continue;
+        }
+        entries.push(`const $${k} = ${JSON.stringify(val)};`)
+    }
+    return `\n` + entries.join(`\n`);
+}
+
 const SimpleRAGCode = (
     {
         name,
         limit = 5,
         contentField
-    }: ICommandInputSchema) => `
-import {z} from "genkit";
+    }: ICommandInputSchema) => {
+    return String.raw`
+import {Document, RerankerParams, RetrieverParams, z} from "genkit";
 import {ai} from "@/ai/ai";
 
-export const ${name}SimpleRetriever = ai.defineSimpleRetriever(
+${RAGConsoleInputDeclarationCode}
+
+export const ${name}Retriever = ai.defineSimpleRetriever(
     {
-        name: '${name}SimpleRetriever',
+        name: '${name}Retriever',
         configSchema: z
-          .object({
-            limit: z.number().optional(),
-          })
-          .optional(),
-        content: "${contentField}",
+            .object({
+                limit: z.number().optional(),
+            })
+            .optional(),
+        content: $contentField,
         // and several keys to use as metadata
         metadata: [],
     },
     async (query, config): Promise<any[]> => {
-        let limit = config?.limit || ${limit}
+        let limit = config?.limit || $limit;
         //implementation
-        
+
         return [];
     }
 );
+
+export const ${name}RetrieverRetrieve = async (
+    {
+        query,
+        options,
+        withReranker
+    }: {
+        query: RetrieverParams['query'],
+        options: RetrieverParams['options'],
+        withReranker?: Omit<RerankerParams, 'documents' | 'query'>;
+    }
+): Promise<Document[]> => {
+    const docs = await ai.retrieve(
+        {
+            retriever: ${name}Retriever,
+            query,
+            options,
+        }
+    )
+    if (!withReranker) {
+        return docs;
+    }
+    return ai.rerank({
+        ...withReranker,
+        documents: docs,
+        query: query,
+        options,
+    })
+}
 `
+}
 
 /*
 FirestoreRAGCode
@@ -97,20 +144,22 @@ import {defineFirestoreRetriever} from "@genkit-ai/firebase";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {textEmbedding004} from "@genkit-ai/vertexai";
 import {Document, RetrieverParams} from "genkit";
-import {z} from "genkit";
+import {z, RerankerParams} from "genkit";
 import {ai} from "@/ai/ai";
 import {firestore} from "firebase-admin";
 import DocumentReference = firestore.DocumentReference;
 import DocumentSnapshot = firestore.DocumentSnapshot;
 import WriteResult = firestore.WriteResult;
 
+${RAGConsoleInputDeclarationCode}
+
 const db = getFirestore();
 const embedder = textEmbedding004 // choose your embedder
 ${defaultVectorFieldNameCode()}
 const indexConfig = {
-    collection: "${collection}",
-    contentField: "${contentField}",
-    vectorField: ${vectorField ? `"${vectorField}"` : `vectorFieldName("` + contentField + `", embedder.name)`},
+    collection: $collection,
+    contentField: $contentField,
+    vectorField: ${`$vectorField || vectorFieldName("` + contentField + `", embedder.name)`},
     embedder: embedder, //
     metadata: [], // fields from ${collection} collection record
     distanceResultField: '_distance',
@@ -118,13 +167,13 @@ const indexConfig = {
 }
 
 export const ${retrieverName} = defineFirestoreRetriever(ai, {
-    name: "${retrieverName}",
+    name: $name + "Retriever",
     firestore: db,
     ...indexConfig,
 });
 
 export const ${retrieverName}Retrieve = async (
-    params: Omit<RetrieverParams, 'retriever'> & { withReranker?: string; },
+    params: Omit<RetrieverParams, 'retriever'> & { withReranker?: Omit<RerankerParams, 'documents' | 'query'>; },
 ): Promise<Document[]> => {
     const docs = await ai.retrieve({
         ...params,
@@ -133,10 +182,10 @@ export const ${retrieverName}Retrieve = async (
     if (!params.withReranker) {
         return docs;
     }
-    return await ai.rerank({
-        reranker: params.withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
-        query: params.query,
+    return ai.rerank({
+        ...params.withReranker,
         documents: docs,
+        query: params.query,
     });
 }
 
@@ -182,7 +231,7 @@ const FSQueryRetrieverCode = (
 import {defineFirestoreRetriever} from "@genkit-ai/firebase";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {textEmbedding004} from "@genkit-ai/vertexai";
-import {Document} from "genkit";
+import {Document, RerankerParams} from "genkit";
 import {ai} from "@/ai/ai";
 import {firestore} from "firebase-admin";
 import Query = firestore.Query;
@@ -190,13 +239,15 @@ import DocumentReference = firestore.DocumentReference;
 import DocumentSnapshot = firestore.DocumentSnapshot;
 import WriteResult = firestore.WriteResult;
 
+${RAGConsoleInputDeclarationCode}
+
 const db = getFirestore();
 const embedder = textEmbedding004 // choose your embedder
 ${defaultVectorFieldNameCode()}
 const indexConfig = {
-    collection: "${collection}",
-    contentField: "${contentField}",
-    vectorField: ${vectorField ? `"${vectorField}"` : `vectorFieldName("` + contentField + `", embedder.name)`},
+    collection: $collection,
+    contentField: $contentField,
+    vectorField: ${`$vectorField || vectorFieldName("` + contentField + `", embedder.name)`},
     embedder: embedder, //
     metadata: [], // fields from ${collection} collection record
     distanceResultField: '_distance',
@@ -219,7 +270,7 @@ export const ${retrieverName}Retrieve = async (
     }: {
         query: string,
         preFilterQuery: Query,
-        withReranker?: string,
+        withReranker?: Omit<RerankerParams, 'documents' | 'query'>;
     }
 ): Promise<Document[]> => {
     if (preFilterQuery.firestore.collection.name !== indexConfig.collection) {
@@ -259,9 +310,9 @@ export const ${retrieverName}Retrieve = async (
         return docs;
     }
     return await ai.rerank({
-        reranker: withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
-        query: query,
+        ...withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
         documents: docs,
+        query: query,
     });
 }
 
@@ -289,9 +340,9 @@ ${doEmbedCode()}
 }
 
 /*
-customRetrieverCode
+CustomRetrieverCode
 * */
-const customRetrieverCode = (
+const CustomRetrieverCode = (
     {
         name,
         limit = 5
@@ -299,38 +350,61 @@ const customRetrieverCode = (
     const retrieverName = `${name}Retriever`
     return String.raw`
 import {CommonRetrieverOptionsSchema} from 'genkit/retriever';
-import {z} from 'genkit';
 import {ai} from "@/ai/ai";
+import {Document, RerankerParams, RetrieverParams, z} from 'genkit';
+import {devLocalRetrieverRef} from "@genkit-ai/dev-local-vectorstore";
+
+${RAGConsoleInputDeclarationCode}
 
 const subRetriever = devLocalRetrieverRef('subRetriever'); // TODO: your sub-retriever
 
-const ${retrieverName}OptionsSchema = CommonRetrieverOptionsSchema.extend({
-    preRerankK: z.number().max(1000).default(${limit * 2}).optional(), // for sub-retriever
+const configSchema = CommonRetrieverOptionsSchema.extend({
+    preRerankK: z.number().max(1000).default($limit * 2).optional(), // for sub-retriever
 });
 
 export const ${retrieverName} = ai.defineRetriever(
     {
-        name: 'custom/${retrieverName}',
-        configSchema: ${retrieverName}OptionsSchema,
+        name: 'custom/' + $name + 'Retriever',
+        configSchema: configSchema,
     },
     async (input, config) => {
         const documents = await ai.retrieve({
             retriever: subRetriever,
             query: input,
-            options: {k: config.preRerankK || ${limit * 2}},
-        });
-
-        const rerankedDocuments = await ai.rerank({
-            reranker: 'vertexai/semantic-ranker-512',
-            query: input,
-            documents,
+            options: {k: config.preRerankK || ($limit * 2)},
         });
 
         return {
-            documents: rerankedDocuments.slice(0, config.k || ${limit})
+            documents: documents.slice(0, config.k || $limit)
         }
     }
 );
+
+export const ${retrieverName}Retrieve = async (
+    {
+        query,
+        options,
+        withReranker
+    }: {
+        query: RetrieverParams['query'];
+        options?: RetrieverParams['options']
+        withReranker?: Omit<RerankerParams, 'documents' | 'query'>;
+    }
+): Promise<Document[]> => {
+    const docs = await ai.retrieve({
+        retriever: ${retrieverName},
+        query: query,
+        options,
+    });
+    if (!withReranker) {
+        return docs;
+    }
+    return ai.rerank({
+        ...withReranker,
+        documents: docs,
+        query,
+    });
+}
 
 `
 }
@@ -341,28 +415,84 @@ LocalVectorRAGCode
 const LocalVectorRAGCode = (
     {
         name
-    }: ICommandInputSchema) => String.raw`
-import { textEmbedding004 } from '@genkit-ai/vertexai';
-import {
-    devLocalVectorstore,
-    devLocalIndexerRef,
-    devLocalRetrieverRef,
-} from '@genkit-ai/dev-local-vectorstore';
-import {z} from "genkit";
+    }: ICommandInputSchema) => {
+
+    const commonName = `${name}LocalVectorstore`;
+
+    return String.raw`
+import {textEmbedding004} from '@genkit-ai/vertexai';
+import {devLocalIndexerRef, devLocalRetrieverRef, devLocalVectorstore,} from '@genkit-ai/dev-local-vectorstore';
 import {ai} from "@/ai/ai";
+import {Document, IndexerParams, RerankerParams, RetrieverParams} from "genkit";
 
-const refName = '${name}';
+${RAGConsoleInputDeclarationCode}
 
-export const ${name}LocalVectorstore = devLocalVectorstore(ai, [
+const embedder = textEmbedding004 // changes to your embedder
+
+/*
+${name}LocalVectorstorePlugin
+add this plugin to your ai instance's plugins: e.g: genkit({ plugins: [...] })
+* */
+export const ${name}LocalVectorstorePlugin = devLocalVectorstore([
     {
-        indexName: refName,
-        embedder: textEmbedding004,
+        indexName: $name,
+        embedder: embedder,
     },
 ]);
-export const ${name}Indexer = devLocalIndexerRef(refName);
-export const ${name}Retriever = devLocalRetrieverRef(refName);
 
+export const ${name}Indexer = devLocalIndexerRef($name);
+export const ${name}Retriever = devLocalRetrieverRef($name);
+
+export const ${name}IndexerIndex = async (
+    {
+        documents,
+        options
+    }: {
+        documents: Array<Document | string>,
+        options: IndexerParams['options']
+    }
+) => {
+    // Add documents to the index.
+    const toDocs = documents.map(doc => {
+        if (doc instanceof Document) {
+            return doc;
+        }
+        return Document.fromText(doc)
+    })
+
+    return await ai.index({
+        indexer: ${name}Indexer,
+        documents: toDocs,
+        options,
+    });
+}
+
+export const ${name}RetrieverRetrieve = async (
+    {
+        query,
+        options,
+        withReranker,
+    }: {
+        query: RetrieverParams['query'];
+        options?: RetrieverParams['options']
+        withReranker?: Omit<RerankerParams, 'documents' | 'query'>;
+    }): Promise<Array<Document>> => {
+    const docs = await ai.retrieve({
+        retriever: ${name}Retriever,
+        query: query,
+        options,
+    });
+    if (!withReranker) {
+        return docs;
+    }
+    return ai.rerank({
+        ...withReranker,
+        documents: docs,
+        query,
+    });
+}
 `
+}
 
 const doEmbedCode = () => {
     return `
