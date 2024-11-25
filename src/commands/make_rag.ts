@@ -7,7 +7,7 @@ import {getParsedData} from "@/util/commandParser";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     name: z.string(),
-    type: z.enum(['firestore', 'fsquery', 'simple', 'custom']).default("simple").optional(),
+    type: z.enum(['fs', 'fsquery', 'simple', 'custom']).default("simple").optional(),
     limit: z.number().default(5).optional(),
     collection: z.string().default("yourFirestoreCollection").optional(),
     contentField: z.string().default("contentField").optional(),
@@ -25,7 +25,7 @@ export default function make_rag() {
         // case 'local':
         //     code = LocalVectorRAGCode(pdata)
         //     break;
-        case 'firestore':
+        case 'fs':
             code = FirestoreRAGCode(pdata)
             break;
         case 'fsquery':
@@ -48,11 +48,12 @@ export default function make_rag() {
     }
 }
 
-const SimpleRAGCode = ({
-                           name,
-                           limit = 5,
-                           contentField
-                       }: ICommandInputSchema) => `
+const SimpleRAGCode = (
+    {
+        name,
+        limit = 5,
+        contentField
+    }: ICommandInputSchema) => `
 import {z} from "genkit";
 import {ai} from "@/ai/ai";
 
@@ -77,12 +78,16 @@ export const ${name}SimpleRetriever = ai.defineSimpleRetriever(
 );
 `
 
-const FirestoreRAGCode = ({
-                              name,
-                              collection,
-                              contentField,
-                              vectorField,
-                          }: ICommandInputSchema) => {
+/*
+FirestoreRAGCode
+* */
+const FirestoreRAGCode = (
+    {
+        name,
+        collection,
+        contentField,
+        vectorField,
+    }: ICommandInputSchema) => {
     const fsName = name + `FS`
     const retrieverName = fsName + `Retriever`
     const indexerName = fsName + `Indexer`
@@ -100,57 +105,57 @@ import DocumentSnapshot = firestore.DocumentSnapshot;
 import WriteResult = firestore.WriteResult;
 
 const db = getFirestore();
-
+const embedder = textEmbedding004 // choose your embedder
+${defaultVectorFieldNameCode()}
 const indexConfig = {
     collection: "${collection}",
     contentField: "${contentField}",
-    vectorField: "${vectorField || (contentField + `_embedding`)}",
-    embedder: textEmbedding004, //
-    distanceResultField: '_distance'
+    vectorField: ${vectorField ? `"${vectorField}"` : `vectorFieldName("` + contentField + `", embedder.name)`},
+    embedder: embedder, //
+    metadata: [], // fields from ${collection} collection record
+    distanceResultField: '_distance',
+    distanceMeasure: "COSINE" as const, // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
 }
 
 export const ${retrieverName} = defineFirestoreRetriever(ai, {
     name: "${retrieverName}",
     firestore: db,
     ...indexConfig,
-    distanceMeasure: "COSINE", // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
 });
 
-export const ${retrieverName}Retrieve = async (params: Omit<RetrieverParams, 'retriever'>):Promise<Document[]> => {
-    return ai.retrieve({
+export const ${retrieverName}Retrieve = async (
+    params: Omit<RetrieverParams, 'retriever'> & { withReranker?: string; },
+): Promise<Document[]> => {
+    const docs = await ai.retrieve({
         ...params,
         retriever: ${retrieverName},
     })
-}
-
-export async function ${indexerName}Add(text: string, otherData: Record<string, any> = {}): Promise<DocumentReference> {
-    const vectorValue = await doEmbed(text);
-    return db.collection(indexConfig.collection).add({
-        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: text,
-        ...otherData
+    if (!params.withReranker) {
+        return docs;
+    }
+    return await ai.rerank({
+        reranker: params.withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
+        query: params.query,
+        documents: docs,
     });
 }
 
-export async function ${indexerName}Update(doc: DocumentSnapshot, text: string, otherData: Record<string, any> = {}): Promise<WriteResult> {
-    const vectorValue = await doEmbed(text);
-    return doc.ref.set({
+export async function ${indexerName}Add(query: string, otherData: Record<string, any> = {}): Promise<DocumentReference> {
+    const vectorValue = await doEmbed(query);
+    return db.collection(indexConfig.collection).add({
+        ...otherData,
         [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: text,
-        ...otherData
-    }, {merge: true});
+        [indexConfig.contentField]: query,
+    });
 }
 
-export async function ${indexerName}Batch(chunks: string[]): Promise<DocumentReference[]> {
-    return Promise.all(
-        chunks.map(async c => {
-            const vv = await doEmbed(c);
-            return db.collection(indexConfig.collection).add({
-                [indexConfig.vectorField]: FieldValue.vector(vv),
-                [indexConfig.contentField]: c,
-            });
-        })
-    )
+export async function ${indexerName}Update(doc: DocumentSnapshot, query: string, otherData: Record<string, any> = {}): Promise<WriteResult> {
+    const vectorValue = await doEmbed(query);
+    return doc.ref.set({
+        ...otherData,
+        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
+        [indexConfig.contentField]: query,
+    }, {merge: true});
 }
 
 ${doEmbedCode()}
@@ -158,13 +163,17 @@ ${doEmbedCode()}
 `
 }
 
-const FSQueryRetrieverCode = ({
-                                  name,
-                                  limit = 5,
-                                  collection,
-                                  contentField,
-                                  vectorField,
-                              }: ICommandInputSchema) => {
+/*
+FSQueryRetrieverCode
+* */
+const FSQueryRetrieverCode = (
+    {
+        name,
+        limit = 5,
+        collection,
+        contentField,
+        vectorField,
+    }: ICommandInputSchema) => {
     const fsName = name + `FSQuery`
     const retrieverName = fsName + `Retriever`
     const indexerName = fsName + `Indexer`
@@ -182,15 +191,17 @@ import DocumentSnapshot = firestore.DocumentSnapshot;
 import WriteResult = firestore.WriteResult;
 
 const db = getFirestore();
-
+const embedder = textEmbedding004 // choose your embedder
+${defaultVectorFieldNameCode()}
 const indexConfig = {
     collection: "${collection}",
     contentField: "${contentField}",
-    vectorField: "${vectorField || (contentField + `_embedding`)}",
-    embedder: textEmbedding004, //
-    metadata:[],
+    vectorField: ${vectorField ? `"${vectorField}"` : `vectorFieldName("` + contentField + `", embedder.name)`},
+    embedder: embedder, //
+    metadata: [], // fields from ${collection} collection record
     distanceResultField: '_distance',
-    distanceThreshold: 0.7
+    distanceThreshold: 0.7,
+    distanceMeasure: "COSINE" as const, // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
 }
 
 
@@ -198,17 +209,29 @@ export const ${retrieverName} = defineFirestoreRetriever(ai, {
     name: "${retrieverName}",
     firestore: db,
     ...indexConfig,
-    distanceMeasure: "COSINE", // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
 });
 
-export const ${retrieverName}Retrieve = async ({text, preFilterQuery}: { text: string, preFilterQuery: Query }) => {
-    const vectorValue = await doEmbed(text)
+export const ${retrieverName}Retrieve = async (
+    {
+        query,
+        preFilterQuery,
+        withReranker
+    }: {
+        query: string,
+        preFilterQuery: Query,
+        withReranker?: string,
+    }
+): Promise<Document[]> => {
+    if (preFilterQuery.firestore.collection.name !== indexConfig.collection) {
+        throw new Error(${"`"}preFilterQuery's collection name not match with collection '${`$`}{indexConfig.collection}'${"`"})
+    }
+    const vectorValue = await doEmbed(query)
     const snap = await preFilterQuery
         .findNearest({
             vectorField: indexConfig.vectorField,
             queryVector: vectorValue,
             limit: ${limit},
-            distanceMeasure: "COSINE",
+            distanceMeasure: indexConfig.distanceMeasure,
             distanceResultField: indexConfig.distanceResultField,
             distanceThreshold: indexConfig.distanceThreshold
         })
@@ -217,7 +240,7 @@ export const ${retrieverName}Retrieve = async ({text, preFilterQuery}: { text: s
     if (snap.empty)
         return [];
 
-    return snap.docs.map((d) => {
+    const docs = snap.docs.map((d) => {
         const metadata: Record<string, any> = indexConfig.metadata.reduce(
             (obj, key: string) => {
                 if (obj.hasOwnProperty(key)) {
@@ -232,68 +255,69 @@ export const ${retrieverName}Retrieve = async ({text, preFilterQuery}: { text: s
             metadata
         );
     });
-}
-
-
-export async function ${indexerName}Add(text: string, otherData: Record<string, any> = {}): Promise<DocumentReference> {
-    const vectorValue = await doEmbed(text);
-    return db.collection(indexConfig.collection).add({
-        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: text,
-        ...otherData
+    if (!withReranker) {
+        return docs;
+    }
+    return await ai.rerank({
+        reranker: withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
+        query: query,
+        documents: docs,
     });
 }
 
-export async function ${indexerName}Update(doc: DocumentSnapshot, text: string, otherData: Record<string, any> = {}): Promise<WriteResult> {
-    const vectorValue = await doEmbed(text);
-    return doc.ref.set({
+
+export async function ${indexerName}Add(query: string, otherData: Record<string, any> = {}): Promise<DocumentReference> {
+    const vectorValue = await doEmbed(query);
+    return db.collection(indexConfig.collection).add({
+        ...otherData,
         [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: text,
-        ...otherData
+        [indexConfig.contentField]: query,
+    });
+}
+
+export async function ${indexerName}Update(doc: DocumentSnapshot, query: string, otherData: Record<string, any> = {}): Promise<WriteResult> {
+    const vectorValue = await doEmbed(query);
+    return doc.ref.set({
+        ...otherData,
+        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
+        [indexConfig.contentField]: query,
     }, {merge: true});
 }
 
-export async function ${indexerName}Batch(chunks: string[]): Promise<DocumentReference[]> {
-    return Promise.all(
-        chunks.map(async c => {
-            const vv = await doEmbed(c);
-            return db.collection(indexConfig.collection).add({
-                [indexConfig.vectorField]: FieldValue.vector(vv),
-                [indexConfig.contentField]: c,
-            });
-        })
-    )
-}
 ${doEmbedCode()}
 `
 }
 
-const customRetrieverCode = ({
-                                 name,
-                                 limit = 5
-                             }: ICommandInputSchema) => {
+/*
+customRetrieverCode
+* */
+const customRetrieverCode = (
+    {
+        name,
+        limit = 5
+    }: ICommandInputSchema) => {
     const retrieverName = `${name}Retriever`
     return String.raw`
 import {CommonRetrieverOptionsSchema} from 'genkit/retriever';
 import {z} from 'genkit';
 import {ai} from "@/ai/ai";
 
-const ${retrieverName}OptionsSchema = CommonRetrieverOptionsSchema.extend({
-    preRerankK: z.number().max(1000),
-});
+const subRetriever = devLocalRetrieverRef('subRetriever'); // TODO: your sub-retriever
 
-const subRetriever = devLocalRetrieverRef('subRetriever'); // TODO: your retriever
+const ${retrieverName}OptionsSchema = CommonRetrieverOptionsSchema.extend({
+    preRerankK: z.number().max(1000).default(${limit * 2}).optional(), // for sub-retriever
+});
 
 export const ${retrieverName} = ai.defineRetriever(
     {
         name: 'custom/${retrieverName}',
         configSchema: ${retrieverName}OptionsSchema,
     },
-    async (input, options) => {
+    async (input, config) => {
         const documents = await ai.retrieve({
             retriever: subRetriever,
             query: input,
-            options: {k: options.preRerankK || ${limit * 2}},
+            options: {k: config.preRerankK || ${limit * 2}},
         });
 
         const rerankedDocuments = await ai.rerank({
@@ -303,16 +327,21 @@ export const ${retrieverName} = ai.defineRetriever(
         });
 
         return {
-            documents: rerankedDocuments.slice(0, options.k || ${limit})
+            documents: rerankedDocuments.slice(0, config.k || ${limit})
         }
     }
 );
 
 `
 }
-const LocalVectorRAGCode = ({
-                                name
-                            }: ICommandInputSchema) => String.raw`
+
+/*
+LocalVectorRAGCode
+* */
+const LocalVectorRAGCode = (
+    {
+        name
+    }: ICommandInputSchema) => String.raw`
 import { textEmbedding004 } from '@genkit-ai/vertexai';
 import {
     devLocalVectorstore,
@@ -340,5 +369,14 @@ const doEmbedCode = () => {
 const doEmbed = async (value: string): Promise<number[]> => {
     return await ai.embed({embedder: indexConfig.embedder, content: value});
 }
+`
+}
+
+const defaultVectorFieldNameCode = () => {
+    return String.raw`
+const vectorFieldName = (fieldName: string, embedderName: string) => {
+    const embedderFieldName = embedderName.replace(/[~\/\[\]]/g, "_");
+    return fieldName + "_" + embedderFieldName;
+};
 `
 }

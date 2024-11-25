@@ -43,7 +43,7 @@ gkhProgram
     .argument("<name>", "rag name; ex: menuQA")
     .option(
         "-t, --type [type]",
-        "type of vectorstore; supported 'firestore', 'fsquery', 'simple', 'custom' ",
+        "type of vectorstore; supported 'fs', 'fsquery', 'simple', 'custom' ",
         "simple",
     )
     .option("-l, --limit [limit]", "retriever's limit; default: 5", parseInt)
@@ -55,7 +55,7 @@ gkhProgram
     .option("-cf, --contentField [contentField]", "contentField", "contentField")
     .option(
         "-vf, --vectorField [vectorField]",
-        `vectorField; default: $contentField + '_embedding'`,
+        `vectorField; default: $contentField + '_' + embedder.name`,
         "",
     )
     .description("generate a rag")
