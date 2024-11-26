@@ -9,6 +9,7 @@ import {logDone} from "@/util/logger";
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
     name: z.string().includes("/"),
+    type: z.enum(["defineFlow", "onFlow"]).default("defineFlow").optional(),
     stream: z.boolean().default(false).optional()
 })
 
@@ -23,12 +24,19 @@ export function make_flow() {
     const flowName = camelCase(data.name.replace("/", "_") + "Flow");
 
     let code = ""
-    if (data.stream) {
-        code = get_code_streaming(data, flowName)
-    } else {
-        code = get_code_none_stream(data, flowName)
+    switch (data.type) {
+        case "onFlow":
+            code = onFlow_code(data, flowName);
+            break
+        case "defineFlow":
+        default:
+            if (data.stream) {
+                code = get_code_streaming(data, flowName)
+            } else {
+                code = get_code_none_stream(data, flowName)
+            }
+            break;
     }
-
     const flowWriteTo = srcPath(FLOWS_DIR, name1, 'flows', `${flowName}.ts`)
     const exportWriteTo = srcPath(FLOWS_DIR, name1, "flows.ts")
     const doneWriteFlow = makeFile(flowWriteTo, code, data.force)
@@ -41,9 +49,25 @@ export function make_flow() {
         const exportCode = `export {${flowName}} from "./flows/${flowName}"`
         if (!flowTsContent.replace(/\s/g, "").includes(exportCode.replace(/\s/g, ""))) {
             flowTsContent += `\n` + exportCode
-            const doneWriteExport = makeFile(exportWriteTo, flowTsContent, data.force)
+            const doneWriteExport = makeFile(exportWriteTo, flowTsContent, true)
             if (doneWriteExport) {
                 logDone(exportWriteTo)
+            }
+        }
+        if (data.type === 'onFlow') {
+            //write /src/flows/flows.ts
+            const eCode = `export * from "./${name1}/flows"`;
+            const superFlowPath = srcPath(`flows/flows.ts`)
+            if (!existsSync(superFlowPath)) {
+                makeFile(superFlowPath, '')
+            }
+            let superFLowTsContent = readFileSync(superFlowPath).toString()
+            if (!superFLowTsContent.replace(/\s/g, '').includes(eCode.replace(/\s/g, ''))) {
+                superFLowTsContent += `\n${eCode}`
+            }
+            const superFlowWriteDone = makeFile(superFlowPath, superFLowTsContent, true)
+            if (superFlowWriteDone) {
+                logDone(superFlowPath)
             }
         }
     }
@@ -109,4 +133,36 @@ export const ${flowName} = ai.defineFlow(
         return response.text;
     }
 );`
+}
+
+const onFlow_code = (data: ICommandInput, flowName: string) => {
+    return String.raw`
+import {ai} from "@/ai/ai";
+import {noAuth, onFlow} from "@genkit-ai/firebase/functions";
+import {z} from "genkit";
+
+${commandInputDeclarationCode}
+
+export const ${flowName} = onFlow(
+    ai,
+    {
+        name: '${flowName}',
+        authPolicy: noAuth(),${data.stream ? "streamSchema: z.string(),\n" : ""}
+        httpsOptions: {
+        },
+        inputSchema: z.object({
+            query: z.string(),
+        }),
+        outputSchema: z.any(),
+    },
+    async (input) => {
+        // implementation
+        const response = await ai.generate({
+            prompt: input.query,
+        })
+
+        return response.text;
+    }
+);
+`
 }

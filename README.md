@@ -47,12 +47,12 @@ Usage: gkh make:flow [options] <name>
 generate a flow
 
 Arguments:
-  name                         name of flow, separated by / , ex: users/list
+  name                   name of flow, separated by / , ex: users/list
 
 Options:
-  -d, --directory [directory]  flows dir name (default: "flows")
-  -s, --stream [stream]        streaming flow or not; default: false (default: false)
-  -h, --help                   display help for command
+  -s, --stream [stream]  streaming flow or not; default: false (default: false)
+  -t, --type [type]      supported 'defineFlow', 'onFlow' (default: "defineFlow")
+  -h, --help             display help for command
 
 ```
 
@@ -67,7 +67,8 @@ Arguments:
   name                                rag name; ex: menuQA
 
 Options:
-  -t, --type [type]                   type of vectorstore; supported 'fs', 'fsquery', 'simple','local', 'custom'  (default: "simple")
+  -t, --type [type]                   type of vectorstore; supported 'fs', 'fsquery', 'simple','local', 'custom'
+                                      (default: "simple")
   -l, --limit [limit]                 retriever's limit; default: 5
   -c, --collection [collection]       firestore collection (default: "yourFirestoreCollection")
   -cf, --contentField [contentField]  contentField (default: "contentField")
