@@ -34,12 +34,10 @@ export default function make_rag() {
         case 'fsquery':
             code = FSQueryRetrieverCode(pdata)
             break;
-        case 'simple':
-            code = SimpleRAGCode(pdata)
-            break;
         case 'custom':
             code = CustomRetrieverCode(pdata)
             break;
+        case 'simple':
         default:
             code = SimpleRAGCode(pdata)
             break;
@@ -135,7 +133,7 @@ const FirestoreRAGCode = (
         contentField,
         vectorField,
     }: ICommandInputSchema) => {
-    const fsName = name + `FS`
+    const fsName = name + `RAG`
     const retrieverName = fsName + `Retriever`
     const indexerName = fsName + `Indexer`
 
@@ -159,7 +157,7 @@ ${defaultVectorFieldNameCode()}
 const indexConfig = {
     collection: $collection,
     contentField: $contentField,
-    vectorField: ${`$vectorField || vectorFieldName("` + contentField + `", embedder.name)`},
+    vectorField: ${`$vectorField || vectorFieldName($contentField, embedder.name)`},
     embedder: embedder, //
     metadata: [], // fields from ${collection} collection record
     distanceResultField: '_distance',
@@ -223,7 +221,7 @@ const FSQueryRetrieverCode = (
         contentField,
         vectorField,
     }: ICommandInputSchema) => {
-    const fsName = name + `FSQuery`
+    const fsName = name + `RAG`
     const retrieverName = fsName + `Retriever`
     const indexerName = fsName + `Indexer`
 
@@ -247,7 +245,7 @@ ${defaultVectorFieldNameCode()}
 const indexConfig = {
     collection: $collection,
     contentField: $contentField,
-    vectorField: ${`$vectorField || vectorFieldName("` + contentField + `", embedder.name)`},
+    vectorField: ${`$vectorField || vectorFieldName($contentField, embedder.name)`},
     embedder: embedder, //
     metadata: [], // fields from ${collection} collection record
     distanceResultField: '_distance',
