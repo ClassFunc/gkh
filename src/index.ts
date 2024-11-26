@@ -56,7 +56,7 @@ gkhProgram
         "type of vectorstore; supported 'fs', 'fsquery', 'simple','local', 'custom' ",
         "simple",
     )
-    .option("-l, --limit [limit]", "retriever's limit; default: 5", parseInt)
+    .option("-l, --limit [limit]", "retriever's limit", parseInt, 5)
     .option(
         "-c, --collection [collection]",
         "firestore collection",

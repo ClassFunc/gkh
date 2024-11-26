@@ -67,9 +67,8 @@ Arguments:
   name                                rag name; ex: menuQA
 
 Options:
-  -t, --type [type]                   type of vectorstore; supported 'fs', 'fsquery', 'simple','local', 'custom'
-                                      (default: "simple")
-  -l, --limit [limit]                 retriever's limit; default: 5
+  -t, --type [type]                   type of vectorstore; supported 'fs', 'fsquery', 'simple','local', 'custom'  (default: "simple")
+  -l, --limit [limit]                 retriever's limit (default: 5)
   -c, --collection [collection]       firestore collection (default: "yourFirestoreCollection")
   -cf, --contentField [contentField]  contentField (default: "contentField")
   -vf, --vectorField [vectorField]    vectorField; default: $contentField + '_' + embedder.name (default: "")
