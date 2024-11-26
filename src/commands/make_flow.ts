@@ -54,22 +54,22 @@ export function make_flow() {
                 logDone(exportWriteTo)
             }
         }
-        if (data.type === 'onFlow') {
-            //write /src/flows/flows.ts
-            const eCode = `export * from "./${name1}/flows"`;
-            const superFlowPath = srcPath(`flows/flows.ts`)
-            if (!existsSync(superFlowPath)) {
-                makeFile(superFlowPath, '')
-            }
-            let superFLowTsContent = readFileSync(superFlowPath).toString()
-            if (!superFLowTsContent.replace(/\s/g, '').includes(eCode.replace(/\s/g, ''))) {
-                superFLowTsContent += `\n${eCode}`
-            }
-            const superFlowWriteDone = makeFile(superFlowPath, superFLowTsContent, true)
-            if (superFlowWriteDone) {
-                logDone(superFlowPath)
-            }
-        }
+        // if (data.type === 'onFlow') {
+        //     //write /src/flows/flows.ts
+        //     const eCode = `export * from "./${name1}/flows"`;
+        //     const superFlowPath = srcPath(`flows/flows.ts`)
+        //     if (!existsSync(superFlowPath)) {
+        //         makeFile(superFlowPath, '')
+        //     }
+        //     let superFLowTsContent = readFileSync(superFlowPath).toString()
+        //     if (!superFLowTsContent.replace(/\s/g, '').includes(eCode.replace(/\s/g, ''))) {
+        //         superFLowTsContent += `\n${eCode}`
+        //     }
+        //     const superFlowWriteDone = makeFile(superFlowPath, superFLowTsContent, true)
+        //     if (superFlowWriteDone) {
+        //         logDone(superFlowPath)
+        //     }
+        // }
     }
 
 }
