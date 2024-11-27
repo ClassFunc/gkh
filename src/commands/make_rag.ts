@@ -3,6 +3,7 @@ import {makeFile, srcPath} from "@/util/pathUtils";
 import {z} from "zod";
 import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 import {getParsedData} from "@/util/commandParser";
+import {existsSync} from "node:fs";
 
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
@@ -29,10 +30,10 @@ export default function make_rag() {
             code = LocalVectorRAGCode(pdata)
             break;
         case 'fs':
-            code = FirestoreRAGCode(pdata)
+            code = FSCode(pdata)
             break;
         case 'fsquery':
-            code = FSQueryRetrieverCode(pdata)
+            code = FSQueryCode(pdata)
             break;
         case 'custom':
             code = CustomRetrieverCode(pdata)
@@ -46,6 +47,11 @@ export default function make_rag() {
     const done = makeFile(writePath, code, pdata.force, true)
     if (done) {
         logDone(writePath)
+    }
+    const helpersCommonPath = srcPath(RAGS_DIR, 'helpers/common.ts')
+    if (!existsSync(helpersCommonPath)) {
+        const done = makeFile(helpersCommonPath, helpersCommonC_code(), pdata.force, true)
+        if (done) logDone(helpersCommonPath)
     }
 }
 
@@ -124,9 +130,9 @@ export const ${name}RetrieverRetrieve = async (
 }
 
 /*
-FirestoreRAGCode
+firestore type
 * */
-const FirestoreRAGCode = (
+const FSCode = (
     {
         name,
         collection,
@@ -138,92 +144,56 @@ const FirestoreRAGCode = (
     const indexerName = fsName + `_indexer`
 
     return String.raw`
-import {defineFirestoreRetriever} from "@genkit-ai/firebase";
-import {FieldValue, getFirestore} from "firebase-admin/firestore";
-import {textEmbedding004} from "@genkit-ai/vertexai";
-import {Document, EmbedderReference, RerankerParams, RetrieverParams} from "genkit";
-import {ai} from "@/ai/ai";
-import {firestore} from "firebase-admin";
-import DocumentReference = firestore.DocumentReference;
-import DocumentSnapshot = firestore.DocumentSnapshot;
-import WriteResult = firestore.WriteResult;
+import {defineFirestoreRetriever} from '@genkit-ai/firebase';
+import {DocumentReference, FieldValue, getFirestore, WriteResult} from 'firebase-admin/firestore';
+import {Document, RetrieverParams} from 'genkit';
+import {ai} from '@/ai/ai';
+import {
+    defaultEmbedder,
+    doEmbed,
+    FSIndexerActionParams,
+    FSRetrieverActionParams,
+    GKHFirestoreIndexConfigSchema,
+    mergeConfig,
+    vectorFieldName,
+} from '@/rags/helpers/common';
 
-${RAGConsoleInputDeclarationCode}
+${RAGConsoleInputDeclarationCode};
 
-const db = getFirestore();
-const embedder = textEmbedding004 // choose your embedder
-${defaultVectorFieldNameCode()}
-${embedTaskTypesCode()}
-const indexConfig = {
-    collection: $collection,
-    contentField: $contentField,
-    vectorField: ${`$vectorField || vectorFieldName($contentField, embedder.name)`},
-    embedder: embedder, //
-    metadata: [], // fields from ${collection} collection record
-    distanceResultField: '_distance',
-    distanceMeasure: "COSINE" as const, // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
-}
+${firestore_indexConfig_code()};
 
 export const ${retrieverName} = defineFirestoreRetriever(ai, {
-    name: $name + "Retriever",
-    firestore: db,
+    name: $name + 'Retriever',
+    firestore: getFirestore(),
     ...indexConfig,
 });
 
+
 export const ${retrieverName}Retrieve = async (
-    params: Omit<RetrieverParams, 'retriever'> & { withReranker?: Omit<RerankerParams, 'documents' | 'query'>; },
+    {
+        query,
+        options,
+        withReranker,
+        withConfig = {},
+    }: Omit<RetrieverParams, 'retriever'> & Pick<FSRetrieverActionParams, 'withReranker' | 'withConfig'>
 ): Promise<Document[]> => {
+    const _config = mergeConfig(indexConfig, withConfig);
     const docs = await ai.retrieve({
-        ...params,
+        query,
+        options,
         retriever: ${retrieverName},
-    })
-    if (!params.withReranker) {
-        return docs.slice(0, $limit);
-    }
-    const rerankedDocs = await ai.rerank({
-        ...params.withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
-        documents: docs,
-        query: params.query,
     });
-    return rerankedDocs.slice(0, $limit);
+${withReranker_code()};
 }
 
-export async function ${indexerName}Add(
-    content: string, 
-    otherData: Record<string, any> = {},
-    taskType: EmbedderReference["config"]["taskType"] = $indexerTaskType,
-): Promise<DocumentReference> {
-    const vectorValue = await doEmbed(content, taskType);
-    return db.collection(indexConfig.collection).add({
-        ...otherData,
-        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: content,
-    });
-}
-
-export async function ${indexerName}Update(
-    doc: DocumentSnapshot,
-    content: string,
-    otherData: Record<string, any> = {},
-    taskType: EmbedderReference["config"]["taskType"] = $indexerTaskType,
-): Promise<WriteResult> {
-    const vectorValue = await doEmbed(content, taskType);
-    return doc.ref.set({
-        ...otherData,
-        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: content,
-    }, {merge: true});
-}
-
-${doEmbedCode()}
-
+${firestoreIndexerActions_code(indexerName)};
 `
 }
 
 /*
-FSQueryRetrieverCode
+FSQueryCode
 * */
-const FSQueryRetrieverCode = (
+const FSQueryCode = (
     {
         name,
         limit = 5,
@@ -235,39 +205,28 @@ const FSQueryRetrieverCode = (
     const retrieverName = fsName + `_retriever`
     const indexerName = fsName + `_indexer`
 
-    return String.raw`
+    return `
 import {defineFirestoreRetriever} from "@genkit-ai/firebase";
-import {FieldValue, getFirestore} from "firebase-admin/firestore";
-import {textEmbedding004} from "@genkit-ai/vertexai";
+import {DocumentReference, FieldValue, getFirestore, WriteResult} from "firebase-admin/firestore";
 import {Document, EmbedderReference, RerankerParams} from "genkit";
 import {ai} from "@/ai/ai";
-import {firestore} from "firebase-admin";
-import Query = firestore.Query;
-import DocumentReference = firestore.DocumentReference;
-import DocumentSnapshot = firestore.DocumentSnapshot;
-import WriteResult = firestore.WriteResult;
+import {
+    defaultEmbedder,
+    doEmbed,
+    FSIndexerActionParams,
+    GKHFirestoreIndexConfigSchema,
+    mergeConfig,
+    vectorFieldName
+} from "@/rags/helpers/common";
+import {Query} from "firebase-admin/firestore";
 
-${RAGConsoleInputDeclarationCode}
+${RAGConsoleInputDeclarationCode};
 
-const db = getFirestore();
-const embedder = textEmbedding004 // choose your embedder
-${defaultVectorFieldNameCode()}
-${embedTaskTypesCode()}
-const indexConfig = {
-    collection: $collection,
-    contentField: $contentField,
-    vectorField: ${`$vectorField || vectorFieldName($contentField, embedder.name)`},
-    embedder: embedder, //
-    metadata: [], // fields from ${collection} collection record
-    distanceResultField: '_distance',
-    distanceThreshold: 0.7,
-    distanceMeasure: "COSINE" as const, // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
-}
-
+${firestore_indexConfig_code()}
 
 export const ${retrieverName} = defineFirestoreRetriever(ai, {
-    name: "${retrieverName}",
-    firestore: db,
+    name: '${retrieverName}',
+    firestore: getFirestore(),
     ...indexConfig,
 });
 
@@ -277,85 +236,48 @@ export const ${retrieverName}Retrieve = async (
         preFilterQuery,
         withReranker,
         taskType = $retrieverTaskType,
+        withConfig = {},
     }: {
-        query: string,
-        preFilterQuery: Query,
+        query: string;
+        preFilterQuery: Query;
         withReranker?: Omit<RerankerParams, 'documents' | 'query'>;
-        taskType?: EmbedderReference["config"]["taskType"];
+        taskType?: EmbedderReference['config']['taskType'];
+        withConfig?: Partial<GKHFirestoreIndexConfigSchema>;
+    }): Promise<Document[]> => {
+    const _config = mergeConfig(indexConfig, withConfig);
+    if (preFilterQuery.firestore.collection.name !== _config.collection) {
+        throw new Error("preFilterQuery collection name not match with collection: " + _config.collection);
     }
-): Promise<Document[]> => {
-    if (preFilterQuery.firestore.collection.name !== indexConfig.collection) {
-        throw new Error(${"`"}preFilterQuery's collection name not match with collection '${`$`}{indexConfig.collection}'${"`"})
-    }
-    const vectorValue = await doEmbed(query, taskType);
+    const vectorValue = await doEmbed(_config.embedder, query, taskType);
     const snap = await preFilterQuery
         .findNearest({
-            vectorField: indexConfig.vectorField,
+            vectorField: _config.vectorField,
             queryVector: vectorValue,
-            limit: ${limit},
-            distanceMeasure: indexConfig.distanceMeasure,
-            distanceResultField: indexConfig.distanceResultField,
-            distanceThreshold: indexConfig.distanceThreshold
+            limit: _config.limit,
+            distanceMeasure: _config.distanceMeasure,
+            distanceResultField: _config.distanceResultField,
+            distanceThreshold: _config.distanceThreshold,
         })
         .get();
 
-    if (snap.empty)
-        return [];
+    if (snap.empty) return [];
 
     const docs = snap.docs.map((d) => {
-        const metadata: Record<string, any> = indexConfig.metadata.reduce(
+        const metadata: Record<string, any> = _config.metadata.reduce(
             (obj, key: string) => {
                 if (obj.hasOwnProperty(key)) {
-                    obj[key] = d.get(key)
+                    obj[key] = d.get(key);
                 }
                 return obj;
-            }
-            , {} as Record<string, any>
+            },
+            {} as Record<string, any>,
         );
-        return Document.fromText(
-            d.get(indexConfig.contentField),
-            metadata
-        );
+        return Document.fromText(d.get(_config.contentField), metadata);
     });
-    if (!withReranker) {
-        return docs.slice(0, $limit);
-    }
-    const rerankedDocs = await ai.rerank({
-        ...withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
-        documents: docs,
-        query: query,
-    });
-    return rerankedDocs.slice(0, $limit);
-}
+${withReranker_code()}
+};
 
-
-export async function ${indexerName}Add(
-    content: string, 
-    otherData: Record<string, any> = {},
-    taskType: EmbedderReference["config"]["taskType"] = $indexerTaskType,
-): Promise<DocumentReference> {
-    const vectorValue = await doEmbed(content, taskType);
-    return db.collection(indexConfig.collection).add({
-        ...otherData,
-        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: content,
-    });
-}
-
-export async function ${indexerName}Update(
-    doc: DocumentSnapshot, 
-    content: string, otherData: Record<string, any> = {},
-    taskType: EmbedderReference["config"]["taskType"] = $indexerTaskType,
-): Promise<WriteResult> {
-    const vectorValue = await doEmbed(content, taskType);
-    return doc.ref.set({
-        ...otherData,
-        [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: content,
-    }, {merge: true});
-}
-
-${doEmbedCode()}
+${firestoreIndexerActions_code(indexerName)};
 `
 }
 
@@ -440,14 +362,12 @@ const LocalVectorRAGCode = (
     const commonName = `${name}LocalVectorstore`;
 
     return String.raw`
-import {textEmbedding004} from '@genkit-ai/vertexai';
-import {devLocalIndexerRef, devLocalRetrieverRef, devLocalVectorstore,} from '@genkit-ai/dev-local-vectorstore';
+import {devLocalIndexerRef, devLocalRetrieverRef, devLocalVectorstore} from "@genkit-ai/dev-local-vectorstore";
 import {ai} from "@/ai/ai";
-import {Document, IndexerParams, RerankerParams, RetrieverParams} from "genkit";
+import {Document, IndexerParams} from "genkit";
+import {defaultEmbedder, FSRetrieverActionParams, GKHRetrieverParams, mergeConfig} from "@/rags/helpers/common";
 
 ${RAGConsoleInputDeclarationCode}
-
-const embedder = textEmbedding004 // changes to your embedder
 
 /*
 ${name}LocalVectorstorePlugin
@@ -456,7 +376,7 @@ add this plugin to your ai instance's plugins: e.g: genkit({ plugins: [...] })
 export const ${name}LocalVectorstorePlugin = devLocalVectorstore([
     {
         indexName: $name,
-        embedder: embedder,
+        embedder: defaultEmbedder,
     },
 ]);
 
@@ -492,42 +412,16 @@ export const ${name}RetrieverRetrieve = async (
         query,
         options,
         withReranker,
-    }: {
-        query: RetrieverParams['query'];
-        options?: RetrieverParams['options']
-        withReranker?: Omit<RerankerParams, 'documents' | 'query'>;
-    }): Promise<Array<Document>> => {
+        withConfig = {},
+    }: GKHRetrieverParams & FSRetrieverActionParams): Promise<Array<Document>> => {
+    const _config = mergeConfig(withConfig);
     const docs = await ai.retrieve({
         retriever: ${name}Retriever,
         query: query,
         options,
     });
-    if (!withReranker) {
-        return docs;
-    }
-    return ai.rerank({
-        ...withReranker,
-        documents: docs,
-        query,
-    });
+${withReranker_code()}
 }
-`
-}
-
-const doEmbedCode = () => {
-    return `
-const doEmbed = async (value: string, taskType: EmbedderReference["config"]["taskType"]): Promise<number[]> => {
-    return await ai.embed({embedder: indexConfig.embedder, content: value, options: {taskType: taskType}});
-};
-`
-}
-
-const defaultVectorFieldNameCode = () => {
-    return String.raw`
-const vectorFieldName = (fieldName: string, embedderName: string) => {
-    const embedderFieldName = embedderName.replace(/[~\/\[\]]/g, "_");
-    return fieldName + "_" + embedderFieldName;
-};
 `
 }
 
@@ -535,5 +429,152 @@ const embedTaskTypesCode = () => {
     return String.raw`
 const $indexerTaskType = "RETRIEVAL_DOCUMENT"
 const $retrieverTaskType = "RETRIEVAL_QUERY"
+`
+}
+
+/*
+firestore rag codes
+* */
+const firestore_indexConfig_code = () => {
+    return `
+${embedTaskTypesCode()};
+export const indexConfig: GKHFirestoreIndexConfigSchema = {
+    collection: $collection,
+    contentField: $contentField,
+    vectorField: $vectorField || vectorFieldName($contentField, defaultEmbedder.name),
+    embedder: defaultEmbedder, //
+    metadata: [], // fields from collection record
+    distanceResultField: '_distance',
+    distanceMeasure: 'COSINE' as const, // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
+    distanceThreshold: 0.7,
+    limit: $limit,
+};
+`
+}
+
+const firestoreIndexerActions_code = (indexerName: string) => {
+    return `
+/*
+indexer actions
+* */
+
+export async function ${indexerName}Add(
+    {
+        content,
+        additionData = {},
+        taskType = $indexerTaskType,
+        withConfig = {},
+    }: FSIndexerActionParams): Promise<DocumentReference> {
+    const _config = mergeConfig(indexConfig, withConfig);
+    const vectorValue = await doEmbed(_config.embedder, content, taskType);
+    return getFirestore().collection(_config.collection).add({
+        ...additionData,
+        [_config.vectorField]: FieldValue.vector(vectorValue),
+        [_config.contentField]: content,
+    });
+}
+
+export async function ${indexerName}Update(
+    docRef: DocumentReference,
+    {content, additionData = {}, taskType = $indexerTaskType, withConfig = {}}: FSIndexerActionParams,
+): Promise<WriteResult> {
+    const _config = mergeConfig(indexConfig, withConfig);
+    const vectorValue = await doEmbed(_config.embedder, content, taskType);
+    return docRef.set(
+        {
+            ...additionData,
+            [_config.vectorField]: FieldValue.vector(vectorValue),
+            [_config.contentField]: content,
+        },
+        {merge: true},
+    );
+}
+`
+}
+
+const withReranker_code = () => {
+    return `
+    if (!withReranker) {
+        return docs.slice(0, _config.limit);
+    }
+    const rerankedDocs = await ai.rerank({
+        ...withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
+        documents: docs,
+        query: query,
+    });
+    return rerankedDocs.slice(0, _config.limit);
+`
+}
+
+const helpersCommonC_code = () => {
+    return `
+import {EmbedderReference, RerankerParams, RetrieverParams} from "genkit";
+import {Query} from "firebase-admin/firestore";
+import {ai} from "@/ai/ai";
+import {textEmbedding004} from "@genkit-ai/vertexai";
+
+export const defaultEmbedder = textEmbedding004; // changes your defaultEmbedder
+
+export interface GKHFirestoreIndexConfigSchema {
+    collection: string;
+    contentField: string;
+    vectorField: string;
+    metadata: any[];
+    limit: number;
+    embedder: EmbedderReference | string;
+    distanceMeasure: FirebaseFirestore.VectorQueryOptions["distanceMeasure"];
+    distanceThreshold: FirebaseFirestore.VectorQueryOptions["distanceThreshold"];
+    distanceResultField: FirebaseFirestore.VectorQueryOptions["distanceResultField"];
+}
+
+export const mergeConfig = (
+    ...configs: Partial<GKHFirestoreIndexConfigSchema>[]
+) => {
+    return configs.reduce(
+        (p, v, idx) => {
+            return {...p, ...v}
+        }, {}
+    ) as GKHFirestoreIndexConfigSchema;
+};
+
+/*
+firestore, firestore query commons
+*/
+
+// retriever actions options
+export interface FSRetrieverActionParams {
+    query: string;
+    preFilterQuery?: Query;
+    withReranker?: Omit<RerankerParams, "documents" | "query">;
+    taskType?: EmbedderReference["config"]["taskType"];
+    withConfig?: Partial<GKHFirestoreIndexConfigSchema>;
+}
+
+// indexer actions options
+export interface FSIndexerActionParams {
+    content: string;
+    additionData?: Record<string, any>;
+    taskType?: EmbedderReference["config"]["taskType"];
+    withConfig?: Partial<GKHFirestoreIndexConfigSchema>;
+}
+
+/*
+embedder common
+*/
+export const doEmbed = async (
+    embedder: GKHFirestoreIndexConfigSchema["embedder"],
+    content: string,
+    taskType: EmbedderReference["config"]["taskType"],
+): Promise<number[]> => {
+    return await ai.embed({embedder, content, options: {taskType: taskType}});
+};
+
+export const vectorFieldName = (fieldName: string, embedderName: string) => {
+    const embedderFieldName = embedderName.replace(/[~\\/\\[\\]]/g, "_");
+    return fieldName + "_" + embedderFieldName;
+};
+
+export type GKHRetrieverParams = Omit<RetrieverParams, 'retriever'>
+export type GKHRerankerParams = Omit<RerankerParams, 'documents' | 'query'>
 `
 }
