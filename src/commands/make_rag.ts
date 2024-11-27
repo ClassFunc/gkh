@@ -27,7 +27,7 @@ export default function make_rag() {
     let code: string
     switch (pdata.type) {
         case 'local':
-            code = LocalVectorRAGCode(pdata)
+            code = LocalCode(pdata)
             break;
         case 'fs':
             code = FSCode(pdata)
@@ -36,11 +36,11 @@ export default function make_rag() {
             code = FSQueryCode(pdata)
             break;
         case 'custom':
-            code = CustomRetrieverCode(pdata)
+            code = CustomCode(pdata)
             break;
         case 'simple':
         default:
-            code = SimpleRAGCode(pdata)
+            code = SimpleCode(pdata)
             break;
     }
     const writePath = srcPath(RAGS_DIR, `${pdata.name}RAG.ts`)
@@ -66,23 +66,23 @@ const getRAGConsoleInputDeclarationCode = (pdata: ICommandInputSchema) => {
     return `\n` + entries.join(`\n`);
 }
 
-const SimpleRAGCode = (
+const SimpleCode = (
     {
         name,
         limit = 5,
         contentField
     }: ICommandInputSchema) => {
     return String.raw`
-import {Document, RerankerParams, RetrieverParams, z} from "genkit";
-import {ai} from "@/ai/ai";
+import {GKHRetrieverActionParams, GKHRetrieverParams, mergeConfig} from "@/rags/helpers/common";
+import {Document, z} from "genkit";
+import {ai} from '@/ai/ai';
 
-${RAGConsoleInputDeclarationCode}
+${RAGConsoleInputDeclarationCode};
 
 export const ${name}Retriever = ai.defineSimpleRetriever(
     {
         name: '${name}Retriever',
-        configSchema: z
-            .object({
+        configSchema: z.object({
                 limit: z.number().optional(),
             })
             .optional(),
@@ -102,29 +102,19 @@ export const ${name}RetrieverRetrieve = async (
     {
         query,
         options,
-        withReranker
-    }: {
-        query: RetrieverParams['query'],
-        options: RetrieverParams['options'],
-        withReranker?: Omit<RerankerParams, 'documents' | 'query'>;
-    }
+        withReranker,
+        withConfig = {},
+    }: GKHRetrieverParams & GKHRetrieverActionParams
 ): Promise<Document[]> => {
+    const _config = mergeConfig({limit: $limit}, withConfig);
     const docs = await ai.retrieve(
         {
             retriever: ${name}Retriever,
             query,
             options,
         }
-    )
-    if (!withReranker) {
-        return docs;
-    }
-    return ai.rerank({
-        ...withReranker,
-        documents: docs,
-        query: query,
-        options,
-    })
+    );
+${withReranker_code()};
 }
 `
 }
@@ -151,9 +141,9 @@ import {ai} from '@/ai/ai';
 import {
     defaultEmbedder,
     doEmbed,
-    FSIndexerActionParams,
-    FSRetrieverActionParams,
-    GKHFirestoreIndexConfigSchema,
+    GKHIndexerActionParams,
+    GKHRetrieverActionParams,
+    GKHIndexConfigSchema,
     mergeConfig,
     vectorFieldName,
 } from '@/rags/helpers/common';
@@ -175,7 +165,7 @@ export const ${retrieverName}Retrieve = async (
         options,
         withReranker,
         withConfig = {},
-    }: Omit<RetrieverParams, 'retriever'> & Pick<FSRetrieverActionParams, 'withReranker' | 'withConfig'>
+    }: Omit<RetrieverParams, 'retriever'> & Pick<GKHRetrieverActionParams, 'withReranker' | 'withConfig'>
 ): Promise<Document[]> => {
     const _config = mergeConfig(indexConfig, withConfig);
     const docs = await ai.retrieve({
@@ -213,8 +203,8 @@ import {ai} from "@/ai/ai";
 import {
     defaultEmbedder,
     doEmbed,
-    FSIndexerActionParams,
-    GKHFirestoreIndexConfigSchema,
+    GKHIndexerActionParams,
+    GKHIndexConfigSchema,
     mergeConfig,
     vectorFieldName
 } from "@/rags/helpers/common";
@@ -242,7 +232,7 @@ export const ${retrieverName}Retrieve = async (
         preFilterQuery: Query;
         withReranker?: Omit<RerankerParams, 'documents' | 'query'>;
         taskType?: EmbedderReference['config']['taskType'];
-        withConfig?: Partial<GKHFirestoreIndexConfigSchema>;
+        withConfig?: Partial<GKHIndexConfigSchema>;
     }): Promise<Document[]> => {
     const _config = mergeConfig(indexConfig, withConfig);
     if (preFilterQuery.firestore.collection.name !== _config.collection) {
@@ -284,19 +274,20 @@ ${firestoreIndexerActions_code(indexerName)};
 /*
 CustomRetrieverCode
 * */
-const CustomRetrieverCode = (
+const CustomCode = (
     {
         name,
         limit = 5
     }: ICommandInputSchema) => {
     const retrieverName = `${name}Retriever`
     return String.raw`
-import {CommonRetrieverOptionsSchema} from 'genkit/retriever';
+import {CommonRetrieverOptionsSchema} from "genkit/retriever";
 import {ai} from "@/ai/ai";
-import {Document, RerankerParams, RetrieverParams, z} from 'genkit';
+import {Document, z} from "genkit";
 import {devLocalRetrieverRef} from "@genkit-ai/dev-local-vectorstore";
+import {GKHRetrieverActionParams, GKHRetrieverParams, mergeConfig} from "@/rags/helpers/common";
 
-${RAGConsoleInputDeclarationCode}
+${RAGConsoleInputDeclarationCode};
 
 const subRetriever = devLocalRetrieverRef('subRetriever'); // TODO: your sub-retriever
 
@@ -317,8 +308,8 @@ export const ${retrieverName} = ai.defineRetriever(
         });
 
         return {
-            documents: documents.slice(0, config.k || $limit)
-        }
+            documents: documents.slice(0, config.k || $limit),
+        };
     }
 );
 
@@ -326,26 +317,17 @@ export const ${retrieverName}Retrieve = async (
     {
         query,
         options,
-        withReranker
-    }: {
-        query: RetrieverParams['query'];
-        options?: RetrieverParams['options']
-        withReranker?: Omit<RerankerParams, 'documents' | 'query'>;
-    }
+        withReranker,
+        withConfig = {},
+    }: GKHRetrieverParams & GKHRetrieverActionParams,
 ): Promise<Document[]> => {
+    const _config = mergeConfig({limit: $limit}, withConfig);
     const docs = await ai.retrieve({
         retriever: ${retrieverName},
         query: query,
         options,
     });
-    if (!withReranker) {
-        return docs;
-    }
-    return ai.rerank({
-        ...withReranker,
-        documents: docs,
-        query,
-    });
+${withReranker_code()}
 }
 
 `
@@ -354,7 +336,7 @@ export const ${retrieverName}Retrieve = async (
 /*
 LocalVectorRAGCode
 * */
-const LocalVectorRAGCode = (
+const LocalCode = (
     {
         name
     }: ICommandInputSchema) => {
@@ -365,7 +347,7 @@ const LocalVectorRAGCode = (
 import {devLocalIndexerRef, devLocalRetrieverRef, devLocalVectorstore} from "@genkit-ai/dev-local-vectorstore";
 import {ai} from "@/ai/ai";
 import {Document, IndexerParams} from "genkit";
-import {defaultEmbedder, FSRetrieverActionParams, GKHRetrieverParams, mergeConfig} from "@/rags/helpers/common";
+import {defaultEmbedder, GKHRetrieverActionParams, GKHRetrieverParams, mergeConfig} from "@/rags/helpers/common";
 
 ${RAGConsoleInputDeclarationCode}
 
@@ -413,7 +395,7 @@ export const ${name}RetrieverRetrieve = async (
         options,
         withReranker,
         withConfig = {},
-    }: GKHRetrieverParams & FSRetrieverActionParams): Promise<Array<Document>> => {
+    }: GKHRetrieverParams & GKHRetrieverActionParams): Promise<Array<Document>> => {
     const _config = mergeConfig(withConfig);
     const docs = await ai.retrieve({
         retriever: ${name}Retriever,
@@ -429,6 +411,7 @@ const embedTaskTypesCode = () => {
     return String.raw`
 const $indexerTaskType = "RETRIEVAL_DOCUMENT"
 const $retrieverTaskType = "RETRIEVAL_QUERY"
+
 `
 }
 
@@ -438,14 +421,14 @@ firestore rag codes
 const firestore_indexConfig_code = () => {
     return `
 ${embedTaskTypesCode()};
-export const indexConfig: GKHFirestoreIndexConfigSchema = {
+export const indexConfig: GKHIndexConfigSchema = {
     collection: $collection,
     contentField: $contentField,
     vectorField: $vectorField || vectorFieldName($contentField, defaultEmbedder.name),
     embedder: defaultEmbedder, //
     metadata: [], // fields from collection record
     distanceResultField: '_distance',
-    distanceMeasure: 'COSINE' as const, // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
+    distanceMeasure: "COSINE", // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
     distanceThreshold: 0.7,
     limit: $limit,
 };
@@ -464,7 +447,7 @@ export async function ${indexerName}Add(
         additionData = {},
         taskType = $indexerTaskType,
         withConfig = {},
-    }: FSIndexerActionParams): Promise<DocumentReference> {
+    }: GKHIndexerActionParams): Promise<DocumentReference> {
     const _config = mergeConfig(indexConfig, withConfig);
     const vectorValue = await doEmbed(_config.embedder, content, taskType);
     return getFirestore().collection(_config.collection).add({
@@ -476,7 +459,7 @@ export async function ${indexerName}Add(
 
 export async function ${indexerName}Update(
     docRef: DocumentReference,
-    {content, additionData = {}, taskType = $indexerTaskType, withConfig = {}}: FSIndexerActionParams,
+    {content, additionData = {}, taskType = $indexerTaskType, withConfig = {}}: GKHIndexerActionParams,
 ): Promise<WriteResult> {
     const _config = mergeConfig(indexConfig, withConfig);
     const vectorValue = await doEmbed(_config.embedder, content, taskType);
@@ -515,7 +498,7 @@ import {textEmbedding004} from "@genkit-ai/vertexai";
 
 export const defaultEmbedder = textEmbedding004; // changes your defaultEmbedder
 
-export interface GKHFirestoreIndexConfigSchema {
+export interface GKHIndexConfigSchema {
     collection: string;
     contentField: string;
     vectorField: string;
@@ -528,13 +511,13 @@ export interface GKHFirestoreIndexConfigSchema {
 }
 
 export const mergeConfig = (
-    ...configs: Partial<GKHFirestoreIndexConfigSchema>[]
+    ...configs: Partial<GKHIndexConfigSchema>[]
 ) => {
     return configs.reduce(
         (p, v, idx) => {
             return {...p, ...v}
         }, {}
-    ) as GKHFirestoreIndexConfigSchema;
+    ) as GKHIndexConfigSchema;
 };
 
 /*
@@ -542,27 +525,27 @@ firestore, firestore query commons
 */
 
 // retriever actions options
-export interface FSRetrieverActionParams {
+export interface GKHRetrieverActionParams {
     query: string;
     preFilterQuery?: Query;
     withReranker?: Omit<RerankerParams, "documents" | "query">;
     taskType?: EmbedderReference["config"]["taskType"];
-    withConfig?: Partial<GKHFirestoreIndexConfigSchema>;
+    withConfig?: Partial<GKHIndexConfigSchema>;
 }
 
 // indexer actions options
-export interface FSIndexerActionParams {
+export interface GKHIndexerActionParams {
     content: string;
     additionData?: Record<string, any>;
     taskType?: EmbedderReference["config"]["taskType"];
-    withConfig?: Partial<GKHFirestoreIndexConfigSchema>;
+    withConfig?: Partial<GKHIndexConfigSchema>;
 }
 
 /*
 embedder common
 */
 export const doEmbed = async (
-    embedder: GKHFirestoreIndexConfigSchema["embedder"],
+    embedder: GKHIndexConfigSchema["embedder"],
     content: string,
     taskType: EmbedderReference["config"]["taskType"],
 ): Promise<number[]> => {

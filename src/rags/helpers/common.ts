@@ -5,7 +5,7 @@ import {textEmbedding004} from "@genkit-ai/vertexai";
 
 export const defaultEmbedder = textEmbedding004; // changes your defaultEmbedder
 
-export interface GKHFirestoreIndexConfigSchema {
+export interface GKHIndexConfigSchema {
     collection: string;
     contentField: string;
     vectorField: string;
@@ -18,13 +18,13 @@ export interface GKHFirestoreIndexConfigSchema {
 }
 
 export const mergeConfig = (
-    conf1: GKHFirestoreIndexConfigSchema,
-    withConfig?: Partial<GKHFirestoreIndexConfigSchema>
+    ...configs: Partial<GKHIndexConfigSchema>[]
 ) => {
-    return {
-        ...conf1,
-        ...withConfig,
-    };
+    return configs.reduce(
+        (p, v, idx) => {
+            return {...p, ...v}
+        }, {}
+    ) as GKHIndexConfigSchema;
 };
 
 /*
@@ -32,27 +32,27 @@ firestore, firestore query commons
 */
 
 // retriever actions options
-export interface FSRetrieverActionParams {
+export interface GKHRetrieverActionParams {
     query: string;
     preFilterQuery?: Query;
     withReranker?: Omit<RerankerParams, "documents" | "query">;
     taskType?: EmbedderReference["config"]["taskType"];
-    withConfig?: Partial<GKHFirestoreIndexConfigSchema>;
+    withConfig?: Partial<GKHIndexConfigSchema>;
 }
 
 // indexer actions options
-export interface FSIndexerActionParams {
+export interface GKHIndexerActionParams {
     content: string;
     additionData?: Record<string, any>;
     taskType?: EmbedderReference["config"]["taskType"];
-    withConfig?: Partial<GKHFirestoreIndexConfigSchema>;
+    withConfig?: Partial<GKHIndexConfigSchema>;
 }
 
 /*
 embedder common
 */
 export const doEmbed = async (
-    embedder: GKHFirestoreIndexConfigSchema["embedder"],
+    embedder: GKHIndexConfigSchema["embedder"],
     content: string,
     taskType: EmbedderReference["config"]["taskType"],
 ): Promise<number[]> => {
