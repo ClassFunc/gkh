@@ -133,9 +133,9 @@ const FirestoreRAGCode = (
         contentField,
         vectorField,
     }: ICommandInputSchema) => {
-    const fsName = name + `RAG`
-    const retrieverName = fsName + `Retriever`
-    const indexerName = fsName + `Indexer`
+    const fsName = name
+    const retrieverName = fsName + `_retriever`
+    const indexerName = fsName + `_indexer`
 
     return String.raw`
 import {defineFirestoreRetriever} from "@genkit-ai/firebase";
@@ -178,30 +178,40 @@ export const ${retrieverName}Retrieve = async (
         retriever: ${retrieverName},
     })
     if (!params.withReranker) {
-        return docs;
+        return docs.slice(0, $limit);
     }
-    return ai.rerank({
-        ...params.withReranker,
+    const rerankedDocs = await ai.rerank({
+        ...params.withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
         documents: docs,
         query: params.query,
     });
+    return rerankedDocs.slice(0, $limit);
 }
 
-export async function ${indexerName}Add(query: string, otherData: Record<string, any> = {}): Promise<DocumentReference> {
-    const vectorValue = await doEmbed(query, $indexerTaskType);
+export async function ${indexerName}Add(
+    content: string, 
+    otherData: Record<string, any> = {},
+    taskType: EmbedderReference["config"]["taskType"] = $indexerTaskType,
+): Promise<DocumentReference> {
+    const vectorValue = await doEmbed(content, taskType);
     return db.collection(indexConfig.collection).add({
         ...otherData,
         [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: query,
+        [indexConfig.contentField]: content,
     });
 }
 
-export async function ${indexerName}Update(doc: DocumentSnapshot, query: string, otherData: Record<string, any> = {}): Promise<WriteResult> {
-    const vectorValue = await doEmbed(query, $indexerTaskType);
+export async function ${indexerName}Update(
+    doc: DocumentSnapshot,
+    content: string,
+    otherData: Record<string, any> = {},
+    taskType: EmbedderReference["config"]["taskType"] = $indexerTaskType,
+): Promise<WriteResult> {
+    const vectorValue = await doEmbed(content, taskType);
     return doc.ref.set({
         ...otherData,
         [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: query,
+        [indexConfig.contentField]: content,
     }, {merge: true});
 }
 
@@ -221,9 +231,9 @@ const FSQueryRetrieverCode = (
         contentField,
         vectorField,
     }: ICommandInputSchema) => {
-    const fsName = name + `RAG`
-    const retrieverName = fsName + `Retriever`
-    const indexerName = fsName + `Indexer`
+    const fsName = name
+    const retrieverName = fsName + `_retriever`
+    const indexerName = fsName + `_indexer`
 
     return String.raw`
 import {defineFirestoreRetriever} from "@genkit-ai/firebase";
@@ -266,7 +276,7 @@ export const ${retrieverName}Retrieve = async (
         query,
         preFilterQuery,
         withReranker,
-        taskType
+        taskType = $retrieverTaskType,
     }: {
         query: string,
         preFilterQuery: Query,
@@ -277,7 +287,7 @@ export const ${retrieverName}Retrieve = async (
     if (preFilterQuery.firestore.collection.name !== indexConfig.collection) {
         throw new Error(${"`"}preFilterQuery's collection name not match with collection '${`$`}{indexConfig.collection}'${"`"})
     }
-    const vectorValue = await doEmbed(query, taskType || $retrieverTaskType);
+    const vectorValue = await doEmbed(query, taskType);
     const snap = await preFilterQuery
         .findNearest({
             vectorField: indexConfig.vectorField,
@@ -308,31 +318,40 @@ export const ${retrieverName}Retrieve = async (
         );
     });
     if (!withReranker) {
-        return docs;
+        return docs.slice(0, $limit);
     }
-    return await ai.rerank({
+    const rerankedDocs = await ai.rerank({
         ...withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
         documents: docs,
         query: query,
     });
+    return rerankedDocs.slice(0, $limit);
 }
 
 
-export async function ${indexerName}Add(query: string, otherData: Record<string, any> = {}): Promise<DocumentReference> {
-    const vectorValue = await doEmbed(query, $indexerTaskType);
+export async function ${indexerName}Add(
+    content: string, 
+    otherData: Record<string, any> = {},
+    taskType: EmbedderReference["config"]["taskType"] = $indexerTaskType,
+): Promise<DocumentReference> {
+    const vectorValue = await doEmbed(content, taskType);
     return db.collection(indexConfig.collection).add({
         ...otherData,
         [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: query,
+        [indexConfig.contentField]: content,
     });
 }
 
-export async function ${indexerName}Update(doc: DocumentSnapshot, query: string, otherData: Record<string, any> = {}): Promise<WriteResult> {
-    const vectorValue = await doEmbed(query, $indexerTaskType);
+export async function ${indexerName}Update(
+    doc: DocumentSnapshot, 
+    content: string, otherData: Record<string, any> = {},
+    taskType: EmbedderReference["config"]["taskType"] = $indexerTaskType,
+): Promise<WriteResult> {
+    const vectorValue = await doEmbed(content, taskType);
     return doc.ref.set({
         ...otherData,
         [indexConfig.vectorField]: FieldValue.vector(vectorValue),
-        [indexConfig.contentField]: query,
+        [indexConfig.contentField]: content,
     }, {merge: true});
 }
 
@@ -512,7 +531,7 @@ const vectorFieldName = (fieldName: string, embedderName: string) => {
 `
 }
 
-const embedTaskTypesCode = ()=>{
+const embedTaskTypesCode = () => {
     return String.raw`
 const $indexerTaskType = "RETRIEVAL_DOCUMENT"
 const $retrieverTaskType = "RETRIEVAL_QUERY"
