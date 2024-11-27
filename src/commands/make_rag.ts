@@ -141,8 +141,7 @@ const FirestoreRAGCode = (
 import {defineFirestoreRetriever} from "@genkit-ai/firebase";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {textEmbedding004} from "@genkit-ai/vertexai";
-import {Document, RetrieverParams} from "genkit";
-import {z, RerankerParams} from "genkit";
+import {Document, EmbedderReference, RerankerParams, RetrieverParams} from "genkit";
 import {ai} from "@/ai/ai";
 import {firestore} from "firebase-admin";
 import DocumentReference = firestore.DocumentReference;
@@ -154,6 +153,7 @@ ${RAGConsoleInputDeclarationCode}
 const db = getFirestore();
 const embedder = textEmbedding004 // choose your embedder
 ${defaultVectorFieldNameCode()}
+${embedTaskTypesCode()}
 const indexConfig = {
     collection: $collection,
     contentField: $contentField,
@@ -188,7 +188,7 @@ export const ${retrieverName}Retrieve = async (
 }
 
 export async function ${indexerName}Add(query: string, otherData: Record<string, any> = {}): Promise<DocumentReference> {
-    const vectorValue = await doEmbed(query);
+    const vectorValue = await doEmbed(query, $indexerTaskType);
     return db.collection(indexConfig.collection).add({
         ...otherData,
         [indexConfig.vectorField]: FieldValue.vector(vectorValue),
@@ -197,7 +197,7 @@ export async function ${indexerName}Add(query: string, otherData: Record<string,
 }
 
 export async function ${indexerName}Update(doc: DocumentSnapshot, query: string, otherData: Record<string, any> = {}): Promise<WriteResult> {
-    const vectorValue = await doEmbed(query);
+    const vectorValue = await doEmbed(query, $indexerTaskType);
     return doc.ref.set({
         ...otherData,
         [indexConfig.vectorField]: FieldValue.vector(vectorValue),
@@ -229,7 +229,7 @@ const FSQueryRetrieverCode = (
 import {defineFirestoreRetriever} from "@genkit-ai/firebase";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {textEmbedding004} from "@genkit-ai/vertexai";
-import {Document, RerankerParams} from "genkit";
+import {Document, EmbedderReference, RerankerParams} from "genkit";
 import {ai} from "@/ai/ai";
 import {firestore} from "firebase-admin";
 import Query = firestore.Query;
@@ -242,6 +242,7 @@ ${RAGConsoleInputDeclarationCode}
 const db = getFirestore();
 const embedder = textEmbedding004 // choose your embedder
 ${defaultVectorFieldNameCode()}
+${embedTaskTypesCode()}
 const indexConfig = {
     collection: $collection,
     contentField: $contentField,
@@ -264,17 +265,19 @@ export const ${retrieverName}Retrieve = async (
     {
         query,
         preFilterQuery,
-        withReranker
+        withReranker,
+        taskType
     }: {
         query: string,
         preFilterQuery: Query,
         withReranker?: Omit<RerankerParams, 'documents' | 'query'>;
+        taskType?: EmbedderReference["config"]["taskType"];
     }
 ): Promise<Document[]> => {
     if (preFilterQuery.firestore.collection.name !== indexConfig.collection) {
         throw new Error(${"`"}preFilterQuery's collection name not match with collection '${`$`}{indexConfig.collection}'${"`"})
     }
-    const vectorValue = await doEmbed(query)
+    const vectorValue = await doEmbed(query, taskType || $retrieverTaskType);
     const snap = await preFilterQuery
         .findNearest({
             vectorField: indexConfig.vectorField,
@@ -316,7 +319,7 @@ export const ${retrieverName}Retrieve = async (
 
 
 export async function ${indexerName}Add(query: string, otherData: Record<string, any> = {}): Promise<DocumentReference> {
-    const vectorValue = await doEmbed(query);
+    const vectorValue = await doEmbed(query, $indexerTaskType);
     return db.collection(indexConfig.collection).add({
         ...otherData,
         [indexConfig.vectorField]: FieldValue.vector(vectorValue),
@@ -325,7 +328,7 @@ export async function ${indexerName}Add(query: string, otherData: Record<string,
 }
 
 export async function ${indexerName}Update(doc: DocumentSnapshot, query: string, otherData: Record<string, any> = {}): Promise<WriteResult> {
-    const vectorValue = await doEmbed(query);
+    const vectorValue = await doEmbed(query, $indexerTaskType);
     return doc.ref.set({
         ...otherData,
         [indexConfig.vectorField]: FieldValue.vector(vectorValue),
@@ -494,9 +497,9 @@ export const ${name}RetrieverRetrieve = async (
 
 const doEmbedCode = () => {
     return `
-const doEmbed = async (value: string): Promise<number[]> => {
-    return await ai.embed({embedder: indexConfig.embedder, content: value});
-}
+const doEmbed = async (value: string, taskType: EmbedderReference["config"]["taskType"]): Promise<number[]> => {
+    return await ai.embed({embedder: indexConfig.embedder, content: value, options: {taskType: taskType}});
+};
 `
 }
 
@@ -506,5 +509,12 @@ const vectorFieldName = (fieldName: string, embedderName: string) => {
     const embedderFieldName = embedderName.replace(/[~\/\[\]]/g, "_");
     return fieldName + "_" + embedderFieldName;
 };
+`
+}
+
+const embedTaskTypesCode = ()=>{
+    return String.raw`
+const $indexerTaskType = "RETRIEVAL_DOCUMENT"
+const $retrieverTaskType = "RETRIEVAL_QUERY"
 `
 }
