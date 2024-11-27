@@ -12,6 +12,7 @@
 - [x] [make:tool - make:tool](#make:tool)
 - [x] [make:prompt - make:prompt](#make:prompt)
 - [x] [make:reranker - make:reranker](#make:reranker)
+- [x] [add:getAllFlows - add:getAllFlows](#add:getAllFlows)
 
 - [ ] Others things... (welcome any issue or PR)
 
@@ -67,7 +68,8 @@ Arguments:
   name                                rag name; ex: menuQA
 
 Options:
-  -t, --type [type]                   type of vectorstore; supported 'fs', 'fsquery', 'simple','local', 'custom'  (default: "simple")
+  -t, --type [type]                   type of vectorstore; supported 'fs', 'fsquery', 'simple','local', 'custom'
+                                       (default: "simple")
   -l, --limit [limit]                 retriever's limit (default: 5)
   -c, --collection [collection]       firestore collection (default: "yourFirestoreCollection")
   -cf, --contentField [contentField]  contentField (default: "contentField")
@@ -122,6 +124,19 @@ Arguments:
 
 Options:
   -k, --topK [topK]  topK; default 10 (default: 10)
+  -h, --help         display help for command
+
+```
+
+### <a id="add:getAllFlows">add:getAllFlows</a>
+
+```
+Usage: gkh add:getAllFlows [options]
+
+add:getAllFlows
+
+Options:
+  -t, --type [type]  for 'functions' | 'api' (default: "api")
   -h, --help         display help for command
 
 ```

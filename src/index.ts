@@ -12,6 +12,7 @@ import {make_prompt} from "@/commands/make_prompt";
 
 import {make_reranker} from "@/commands/make_reranker";
 
+import {add_getAllFlows} from "@/commands/add_getAllFlows";
 // ENDS_IMPORT_DONOTREMOVETHISLINE
 const gkhProgram = new Command();
 
@@ -41,11 +42,7 @@ gkhProgram
         "streaming flow or not; default: false",
         false,
     )
-    .option(
-        "-t, --type [type]",
-        "supported 'defineFlow', 'onFlow'",
-        'defineFlow',
-    )
+    .option("-t, --type [type]", "supported 'defineFlow', 'onFlow'", "defineFlow")
     .description("generate a flow")
     .action(make_flow);
 gkhProgram
@@ -97,6 +94,12 @@ gkhProgram
     .argument("name", "reranker name")
     .option("-k, --topK [topK]", "topK; default 10", parseInt, 10)
     .action(make_reranker);
+
+gkhProgram
+    .command("add:getAllFlows")
+    .description("add:getAllFlows")
+    .option('-t, --type [type]', "for 'functions' | 'api'", 'api')
+    .action(add_getAllFlows);
 
 // NEXT_COMMAND__DONOTREMOVETHISLINE
 

@@ -13,7 +13,7 @@ internalProgram.addOption(new Option('-f, --force', 'force write').default(false
 internalProgram
     .command("make:command")
     .description("make command")
-    .option("-n, --name <name>", "name of command", 'ai')
+    .argument("<name>", "name of command")
     .option("-p, --path <path>", "path to save command", srcPath('commands'))
     .action(make_command);
 
