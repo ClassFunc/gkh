@@ -5,6 +5,7 @@ import {makeFile, srcPath} from "@/util/pathUtils";
 import {existsSync, readFileSync} from "node:fs";
 import {camelCase} from "lodash";
 import {logDone} from "@/util/logger";
+import {isIncludes} from "@/util/strings";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
@@ -47,7 +48,7 @@ export function make_flow() {
         }
         let flowTsContent = readFileSync(exportWriteTo).toString()
         const exportCode = `export {${flowName}} from "./flows/${flowName}"`
-        if (!flowTsContent.replace(/\s/g, "").includes(exportCode.replace(/\s/g, ""))) {
+        if (!isIncludes(flowTsContent, exportCode)) {
             flowTsContent += `\n` + exportCode
             const doneWriteExport = makeFile(exportWriteTo, flowTsContent, true)
             if (doneWriteExport) {

@@ -375,7 +375,7 @@ export const ${name}IndexerIndex = async (
     }
 ) => {
     // Add documents to the index.
-    const toDocs = documents.map(doc => {
+    const docs = documents.map(doc => {
         if (doc instanceof Document) {
             return doc;
         }
@@ -384,7 +384,7 @@ export const ${name}IndexerIndex = async (
 
     return await ai.index({
         indexer: ${name}Indexer,
-        documents: toDocs,
+        documents: docs,
         options,
     });
 }
