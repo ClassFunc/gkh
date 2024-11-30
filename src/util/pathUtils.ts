@@ -1,7 +1,16 @@
 import * as path from "node:path";
-import * as fs from "node:fs";
 import {logError, logWarning} from "./logger";
 import {execSync} from "node:child_process";
+// insertLinesAtLastImport(filePath, linesToInsert);
+// insertLinesAtLastImport
+// Example usage:
+// const filePath = 'your-file.ts';
+// const linesToInsert = [
+//     "import { Something } from './somewhere';",
+//     "import { AnotherThing } from './another-place';",
+//     "import { Something } from './somewhere';", // This will be skipped
+// ];
+import * as fs from 'fs';
 
 function getCwd(...p: string[]): string {
     const cwd = process.cwd();
@@ -71,3 +80,32 @@ export function srcFlowsPath(): string {
     return srcPath("flows");
 }
 
+/*
+* insertLinesAtLastImport
+// Example usage:
+const filePath = 'your-file.ts';
+const linesToInsert = [
+    'import { Something } from "./somewhere";',
+    'import { AnotherThing } from "./another-place";',
+];
+insertLinesAtLastImport(filePath, linesToInsert);
+* */
+function insertLinesAtLastImport(filePath: string, linesToInsert: string[]): void {
+    const fileContent = fs.readFileSync(filePath, 'utf-8');
+    const lines = fileContent.split('\n');
+
+    let lastImportIndex = -1;
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].startsWith('import')) {
+            lastImportIndex = i;
+        }
+    }
+
+    if (lastImportIndex !== -1) {
+        lines.splice(lastImportIndex + 1, 0, ...linesToInsert);
+        const updatedContent = lines.join('\n');
+        fs.writeFileSync(filePath, updatedContent);
+    } else {
+        console.log('No import lines found in the file.');
+    }
+}

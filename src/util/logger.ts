@@ -10,6 +10,7 @@ const infoColor = "\u001B[36m";
 const log = (...v: any) => {
     const ls = []
     for (let l of v) {
+        // log for path
         if (isString(l) && l.includes('/')) {
             l = path.relative(path.resolve(), l)
         }

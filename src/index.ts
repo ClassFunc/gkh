@@ -92,7 +92,8 @@ gkhProgram
     .command("make:reranker")
     .description("make:reranker")
     .argument("name", "reranker name")
-    .option("-k, --topK [topK]", "topK; default 10", parseInt, 10)
+    .option("-k, --topK [topK]", "topK", parseInt, 10)
+    .option("-r, --ref [ref]", "reference of reranker", "vertexai/semantic-ranker-512")
     .action(make_reranker);
 
 gkhProgram

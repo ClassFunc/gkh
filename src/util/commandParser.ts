@@ -45,5 +45,9 @@ export const getCommandInputDeclarationCode = (data: any): string => {
         }
         entries.push(`const $${k} = ${JSON.stringify(val)};`)
     }
-    return "\n" + entries.join("\n");
+    return `
+/*
+command inputs
+*/
+${entries.join("\n")}`;
 }
