@@ -67,8 +67,7 @@ export const ${name}Rerank = doRerankFn({reranker: ${name}})
 }
 
 const helpersCommonTs_code = () => {
-    return `
-import {RerankerArgument, RerankerParams, z} from "genkit";
+    return `import {RerankerArgument, RerankerParams, z} from "genkit";
 import {ai} from "@/ai/ai";
 import {RerankerFn} from "@genkit-ai/ai/reranker";
 
@@ -89,6 +88,7 @@ export const rerankerFnByRef = (ref: RerankerArgument): RerankerFn<z.ZodTypeAny>
             reranker: ref,
             query,
             documents,
+            options,
         });
         rerankedDocs.sort((a, b) => b.metadata.score - a.metadata.score);
         if (options) {
@@ -123,7 +123,6 @@ export const doRerankFn = ({reranker}: { reranker: RerankerParams["reranker"] })
             options,
         });
     };
-
 `
 }
 

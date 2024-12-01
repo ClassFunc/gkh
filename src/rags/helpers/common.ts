@@ -1,8 +1,7 @@
-import {Document, EmbedderReference, RerankerParams, RetrieverParams} from "genkit";
-import {Query} from "firebase-admin/firestore";
+import {Document, EmbedderReference, IndexerArgument, IndexerParams, RerankerParams, RetrieverParams} from "genkit";
+import {DocumentReference, FieldValue, getFirestore, Query, WriteResult} from "firebase-admin/firestore";
 import {ai} from "@/ai/ai";
 import {textEmbedding004} from "@genkit-ai/vertexai";
-import {DocumentReference, FieldValue, getFirestore, WriteResult} from "firebase-admin/lib/firestore";
 
 export const defaultEmbedder = textEmbedding004; // changes your defaultEmbedder
 
@@ -10,7 +9,7 @@ export interface GKHIndexConfigSchema {
     collection: string;
     contentField: string;
     vectorField: string;
-    metadata: any[];
+    metadataFields: any[];
     limit: number;
     embedder: EmbedderReference | string;
     distanceMeasure: FirebaseFirestore.VectorQueryOptions["distanceMeasure"];
@@ -18,15 +17,11 @@ export interface GKHIndexConfigSchema {
     distanceResultField: FirebaseFirestore.VectorQueryOptions["distanceResultField"];
 }
 
-export const mergeConfig = (...configs: Partial<GKHIndexConfigSchema>[]) => {
+export const mergeConfig = (...configs: Partial<GKHIndexConfigSchema | Record<string, any>>[]) => {
     return configs.reduce((p, v, idx) => {
         return {...p, ...v};
     }, {}) as GKHIndexConfigSchema;
 };
-
-/*
-firestore, firestore query commons
-*/
 
 // retriever actions options
 export interface GKHRetrieverActionParams {
@@ -57,7 +52,7 @@ export const doEmbed = async (
 };
 
 export const vectorFieldName = (fieldName: string, embedderName: string) => {
-    const embedderFieldName = embedderName.replace(/[~\/\[\]]/g, "_");
+    const embedderFieldName = embedderName.replace(/[~\\/[]]/g, "_");
     return fieldName + "_" + embedderFieldName;
 };
 
@@ -66,21 +61,21 @@ export type GKHRerankerParams = Omit<RerankerParams, "documents" | "query">;
 
 export interface FSQueryRetrieverRetrieveParams {
     query: string;
-    preFilterQuery: Query;
-    withReranker?: Omit<RerankerParams, 'documents' | 'query'>;
-    embedTaskType?: EmbedderReference['config']['embedTaskType'];
+    withReranker?: Omit<RerankerParams, "documents" | "query">;
+    embedTaskType?: EmbedderReference["config"]["embedTaskType"];
     withConfig?: Partial<GKHIndexConfigSchema>;
 }
 
-export const fsqueryCommonRetrieve = async (
+export const fsCommonRetrieverRetrieveWithPreFilter = async (
+    preFilterQuery: Query,
     {
         query,
-        preFilterQuery,
         withReranker,
         embedTaskType,
         withConfig = {},
-        config
-    }: FSQueryRetrieverRetrieveParams & { config: Partial<GKHIndexConfigSchema> }): Promise<Document[]> => {
+        config,
+    }: FSQueryRetrieverRetrieveParams & { config: Partial<GKHIndexConfigSchema> },
+): Promise<Document[]> => {
     const _config = mergeConfig(config, withConfig);
     if (preFilterQuery.firestore.collection.name !== _config.collection) {
         throw new Error("preFilterQuery collection name not match with collection: " + _config.collection);
@@ -100,7 +95,7 @@ export const fsqueryCommonRetrieve = async (
     if (snap.empty) return [];
 
     const docs = snap.docs.map((d) => {
-        const metadata: Record<string, any> = _config.metadata.reduce(
+        const metadataFields: Record<string, any> = _config.metadataFields.reduce(
             (obj, key: string) => {
                 if (obj.hasOwnProperty(key)) {
                     obj[key] = d.get(key);
@@ -109,7 +104,7 @@ export const fsqueryCommonRetrieve = async (
             },
             {} as Record<string, any>,
         );
-        return Document.fromText(d.get(_config.contentField), metadata);
+        return Document.fromText(d.get(_config.contentField), metadataFields);
     });
 
     if (!withReranker) {
@@ -121,18 +116,17 @@ export const fsqueryCommonRetrieve = async (
         query: query,
     });
     return rerankedDocs.slice(0, _config.limit);
-}
+};
 
-export const fsqueryCommonIndexerAdd = async (
-    {
-        content,
-        additionData = {},
-        embedTaskType,
-        withConfig = {},
-        config
-    }: GKHIndexerActionParams & {
-        config: Partial<GKHIndexConfigSchema>
-    }): Promise<DocumentReference> => {
+export const fsCommonIndexerAdd = async ({
+                                             content,
+                                             additionData = {},
+                                             embedTaskType,
+                                             withConfig = {},
+                                             config,
+                                         }: GKHIndexerActionParams & {
+    config: Partial<GKHIndexConfigSchema>;
+}): Promise<DocumentReference> => {
     const _config = mergeConfig(config, withConfig);
     const vectorValue = await doEmbed(_config.embedder, content, embedTaskType);
     return getFirestore()
@@ -142,14 +136,17 @@ export const fsqueryCommonIndexerAdd = async (
             [_config.vectorField]: FieldValue.vector(vectorValue),
             [_config.contentField]: content,
         });
-}
+};
 
-export const fsqueryCommonIndexerUpdate = async (
+export const fsCommonIndexerUpdate = async (
     docRef: DocumentReference,
-    {content, additionData = {}, embedTaskType, withConfig = {}, config}:
-        GKHIndexerActionParams & {
-        config: Partial<GKHIndexConfigSchema>
-    },
+    {
+        content,
+        additionData = {},
+        embedTaskType,
+        withConfig = {},
+        config,
+    }: GKHIndexerActionParams & { config: Partial<GKHIndexConfigSchema> },
 ): Promise<WriteResult> => {
     const _config = mergeConfig(config, withConfig);
     const vectorValue = await doEmbed(_config.embedder, content, embedTaskType);
@@ -161,4 +158,83 @@ export const fsqueryCommonIndexerUpdate = async (
         },
         {merge: true},
     );
-}
+};
+
+export const fsCommonRetrieverRetrieve = async ({
+                                                    retriever,
+                                                    query,
+                                                    options,
+                                                    withReranker,
+                                                    withConfig = {},
+                                                    config,
+                                                }: RetrieverParams &
+    Pick<GKHRetrieverActionParams, "withReranker" | "withConfig"> & { config: GKHIndexConfigSchema }): Promise<
+    Document[]
+> => {
+    const _config = mergeConfig(config, withConfig);
+    const docs = await ai.retrieve({
+        retriever,
+        query,
+        options,
+    });
+
+    if (!withReranker) {
+        return docs.slice(0, _config.limit);
+    }
+    const rerankedDocs = await ai.rerank({
+        ...withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
+        documents: docs,
+        query: query,
+    });
+    return rerankedDocs.slice(0, _config.limit);
+};
+
+export const commonRetrieverRetrieve = async <C extends Record<string, any>>({
+                                                                                 retriever,
+                                                                                 query,
+                                                                                 options,
+                                                                                 withReranker,
+                                                                                 config,
+                                                                             }: RetrieverParams & Pick<GKHRetrieverActionParams, "withReranker"> & {
+    config: C
+}): Promise<Document[]> => {
+    const docs = await ai.retrieve({
+        retriever,
+        query,
+        options,
+    });
+
+    if (!withReranker) {
+        return docs.slice(0, config.k);
+    }
+    const rerankedDocs = await ai.rerank({
+        ...withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
+        query,
+        documents: docs,
+    });
+    return rerankedDocs.slice(0, config.k);
+};
+
+export const commonIndexerIndex = async ({
+                                             indexer,
+                                             documents,
+                                             options,
+                                         }: {
+    indexer: IndexerArgument,
+    documents: Array<Document | string>;
+    options: IndexerParams["options"];
+}) => {
+
+    const docs = documents.map((doc) => {
+        if (doc instanceof Document) {
+            return doc;
+        }
+        return Document.fromText(doc);
+    });
+
+    return await ai.index({
+        indexer: indexer,
+        documents: docs,
+        options,
+    });
+};

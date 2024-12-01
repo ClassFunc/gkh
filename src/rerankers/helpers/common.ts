@@ -19,6 +19,7 @@ export const rerankerFnByRef = (ref: RerankerArgument): RerankerFn<z.ZodTypeAny>
             reranker: ref,
             query,
             documents,
+            options,
         });
         rerankedDocs.sort((a, b) => b.metadata.score - a.metadata.score);
         if (options) {

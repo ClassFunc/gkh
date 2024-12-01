@@ -50,7 +50,7 @@ gkhProgram
     .argument("<name>", "rag name; ex: menuQA")
     .option(
         "-t, --type [type]",
-        "type of vectorstore; supported 'fs', 'fsquery', 'simple','local', 'custom' ",
+        "type of vectorstore; supported 'fs'('firestore'), 'simple','local', 'custom' ",
         "simple",
     )
     .option("-l, --limit [limit]", "retriever's limit", parseInt, 5)
