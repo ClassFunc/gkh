@@ -146,18 +146,30 @@ export const fsCommonIndexerUpdate = async (
         embedTaskType,
         withConfig = {},
         config,
+        updateMethod = "update"
     }: GKHIndexerActionParams & { config: Partial<GKHIndexConfigSchema> },
 ): Promise<WriteResult> => {
     const _config = mergeConfig(config, withConfig);
     const vectorValue = await doEmbed(_config.embedder, content, embedTaskType);
-    return docRef.set(
-        {
-            ...additionData,
-            [_config.vectorField]: FieldValue.vector(vectorValue),
-            [_config.contentField]: content,
-        },
-        {merge: true},
-    );
+    switch (updateMethod) {
+        case "update":
+            return docRef.update(
+                {
+                    ...additionData,
+                    [_config.vectorField]: FieldValue.vector(vectorValue),
+                    [_config.contentField]: content,
+                }
+            );
+        case "set":
+            return docRef.set(
+                {
+                    ...additionData,
+                    [_config.vectorField]: FieldValue.vector(vectorValue),
+                    [_config.contentField]: content,
+                },
+                {merge: true},
+            );
+    }
 };
 
 export const fsCommonRetrieverRetrieve = async ({
