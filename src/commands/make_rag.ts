@@ -512,7 +512,7 @@ export const doEmbed = async (
 };
 
 export const vectorFieldName = (fieldName: string, embedderName: string) => {
-    const embedderFieldName = embedderName.replace(/[~\\\\/[]]/g, "_");
+    const embedderFieldName = embedderName.replace(/[~\\/\\[\\]]/g, "_");
     return fieldName + "_" + embedderFieldName;
 };
 
