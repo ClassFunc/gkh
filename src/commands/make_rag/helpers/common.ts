@@ -38,7 +38,7 @@ export interface GKHIndexerActionParams {
     additionData?: Record<string, any>;
     embedTaskType?: EmbedderReference["config"]["embedTaskType"];
     withConfig?: Partial<GKHIndexConfigSchema>;
-    updateMethod: "update" | "set";
+    updateMethod?: "update" | "set";
 }
 
 /*

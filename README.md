@@ -33,12 +33,9 @@ Usage: gkh docs:gen [options]
 generate openapi documents
 
 Options:
-  -n, --name <name>          name of yaml file; defauls: api (default:
-                             "api")
-  -o, --out <out>            output docs directory; defaults: ./docs
-                             (default: "./docs")
-  -e, --env-file <env-file>  env file path; defaults: .env (default:
-                             ".env")
+  -n, --name <name>          name of yaml file; defauls: api (default: "api")
+  -o, --out <out>            output docs directory; defaults: ./docs (default: "./docs")
+  -e, --env-file <env-file>  env file path; defaults: .env (default: ".env")
   -h, --help                 display help for command
 
 ```
@@ -54,10 +51,8 @@ Arguments:
   name                   name of flow, separated by / , ex: users/list
 
 Options:
-  -s, --stream [stream]  streaming flow or not; default: false (default:
-                         false)
-  -t, --type [type]      supported 'defineFlow', 'onFlow' (default:
-                         "defineFlow")
+  -s, --stream [stream]  streaming flow or not; default: false (default: false)
+  -t, --type [type]      supported 'defineFlow', 'onFlow' (default: "defineFlow")
   -h, --help             display help for command
 
 ```
@@ -128,8 +123,7 @@ Arguments:
 
 Options:
   -k, --topK [topK]  topK (default: 10)
-  -r, --ref [ref]    reference of reranker (default:
-                     "vertexai/semantic-ranker-512")
+  -r, --ref [ref]    reference of reranker (default: "vertexai/semantic-ranker-512")
   -h, --help         display help for command
 
 ```

@@ -1,0 +1,50 @@
+import {
+    commonRetrieverRetrieve,
+    GKHRetrieverActionParams,
+    GKHRetrieverParams,
+    mergeConfig
+} from "@/rags/helpers/common";
+import {Document, z} from "genkit";
+import {ai} from "@/ai/ai";
+
+{{RAGConsoleInputDeclarationCode}}
+
+const configSchema = z.object({
+    limit: z.number().optional(),
+}).optional();
+
+export const {{name}}Retriever = ai.defineSimpleRetriever(
+    {
+        name: '{{name}}Retriever',
+        configSchema: configSchema,
+        content: $contentField,
+        // and several keys to use as metadataFields
+        metadata: [],
+    },
+    async (query, config): Promise<any[]> => {
+        const options = {
+            k: $limit,
+            ...config,
+        };
+        //implementation
+
+        return [];
+    }
+);
+
+export const {{name}}RetrieverRetrieve = async (
+    {
+        query,
+        options,
+        withReranker,
+        withConfig = {},
+    }: GKHRetrieverParams & GKHRetrieverActionParams
+): Promise<Document[]> => {
+    return await commonRetrieverRetrieve({
+        retriever: {{name}}Retriever,
+        query,
+        options,
+        withReranker,
+        config: mergeConfig({k: options.k || $limit}, withConfig),
+    });
+}

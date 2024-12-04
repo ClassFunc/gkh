@@ -1,0 +1,56 @@
+
+import {CommonRetrieverOptionsSchema} from "genkit/retriever";
+import {ai} from "@/ai/ai";
+import {Document, z} from "genkit";
+import {devLocalRetrieverRef} from "@genkit-ai/dev-local-vectorstore";
+import {
+    commonRetrieverRetrieve,
+    GKHRetrieverActionParams,
+    GKHRetrieverParams,
+    mergeConfig
+} from "@/rags/helpers/common";
+
+{{RAGConsoleInputDeclarationCode}}
+
+const subRetriever = devLocalRetrieverRef("subRetriever"); // TODO: your sub-retriever
+
+const configSchema = CommonRetrieverOptionsSchema.extend({
+    preRerankK: z.number().max(1000).optional(), // for sub-retriever
+});
+
+export const {{name}}Retriever = ai.defineRetriever(
+    {
+        name: "{{name}}Retriever",
+        configSchema: configSchema,
+        // info
+    },
+    async (input, config) => {
+        const documents = await ai.retrieve({
+            retriever: subRetriever,
+            query: input,
+            options: {...config, k: config.preRerankK},
+        });
+
+        return {
+            documents,
+        };
+    },
+);
+
+export const {{name}}RetrieverRetrieve = async (
+    {
+        query,
+        options,
+        withReranker,
+    }: GKHRetrieverParams
+        & Pick<GKHRetrieverActionParams, "withReranker"> 
+        & { options: z.infer<typeof configSchema> }
+): Promise<Document[]> => {
+    return await commonRetrieverRetrieve({
+        retriever: {{name}}Retriever,
+        query,
+        options,
+        withReranker,
+        config: mergeConfig({k: $limit}, options)
+    })
+};
