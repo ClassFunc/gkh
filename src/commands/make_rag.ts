@@ -55,7 +55,7 @@ export default function make_rag() {
 }
 
 const getCode = (data: ICommandInputSchema) => {
-    const f = readFileSync(__dirname + `/make_rag/templates/${data.type}.ts.txt`).toString()
+    const f = readFileSync(__dirname + `/make_rag/templates/${data.type}.ts.hbs`).toString()
     return handlebars.compile(f, {
         noEscape: true
     })(data).toString();
