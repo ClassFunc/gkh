@@ -44,6 +44,13 @@ import {z} from "genkit";
 
 ${commandInputDeclarationCode}
 
+const defaultConfig: z.infer<typeof GKHRerankerConfigSchema> = {
+    k: $topK,
+    filter: ({score, metadata}) => {
+        return score > 0.1;
+    }
+}
+
 export const ${name} = ai.defineReranker(
     {
         name: "${name}",
@@ -53,11 +60,11 @@ export const ${name} = ai.defineReranker(
         // info
     },
     async (query, documents, options) => {
+        //implemetations
         options = {
-            ...{k: $topK},
-            ...options
+            ...defaultConfig,
+            ...options,
         }
-        
         return rerankerFnByRef($ref)(query, documents, options)
     },
 );
