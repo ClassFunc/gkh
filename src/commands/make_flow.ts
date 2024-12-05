@@ -6,6 +6,7 @@ import {existsSync, readFileSync} from "node:fs";
 import {camelCase} from "lodash";
 import {logDone} from "@/util/logger";
 import {isIncludes} from "@/util/strings";
+import handlebars from "handlebars";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
@@ -24,20 +25,8 @@ export function make_flow() {
     const [name1, name2] = data.name.split("/");
     const flowName = camelCase(data.name.replace("/", "_") + "Flow");
 
-    let code = ""
-    switch (data.type) {
-        case "onFlow":
-            code = onFlow_code(data, flowName);
-            break
-        case "defineFlow":
-        default:
-            if (data.stream) {
-                code = get_code_streaming(data, flowName)
-            } else {
-                code = get_code_none_stream(data, flowName)
-            }
-            break;
-    }
+    const code = getTemplateCode(data, flowName);
+
     const flowWriteTo = srcPath(FLOWS_DIR, name1, 'flows', `${flowName}.ts`)
     const exportWriteTo = srcPath(FLOWS_DIR, name1, "flows.ts")
     const doneWriteFlow = makeFile(flowWriteTo, code, data.force)
@@ -75,95 +64,29 @@ export function make_flow() {
 
 }
 
-function get_code_streaming(data: ICommandInput, flowName: string) {
-    // work with input
-    return `
-import {ai} from "@/ai/ai";
-import {z} from "genkit";
-
-${commandInputDeclarationCode}
-
-export const ${flowName} = ai.defineStreamingFlow(
-    {
-        name: "${flowName}",
-        inputSchema: z.object({
-            query: z.string()
-        }),
-        outputSchema: z.any(),
-        streamSchema: z.any()
-    },
-    async (input, streamingCallback) => {
-        // implementation
-        const {response, stream} = await ai.generateStream({
-            prompt: input.query,
-        })
-        for await (const chunk of stream) {
-            if (streamingCallback) {
-                streamingCallback(chunk.text)
+const getTemplateCode = (data: ICommandInput, flowName: string) => {
+    let tplName = ''
+    switch (data.type) {
+        case 'onFlow':
+            tplName = 'onFlow'
+            break;
+        case 'defineFlow':
+            if (data.stream) {
+                tplName = 'defineStreamingFlow'
+            } else {
+                tplName = 'defineFlow'
             }
+            break;
+    }
+    data = {
+        ...data,
+        ...{
+            flowName,
+            commandInputDeclarationCode
         }
-        return await response;
-    }
-);
-
-`;
-}
-
-
-function get_code_none_stream(data: ICommandInput, flowName: string) {
-    return `
-import {ai} from "@/ai/ai";
-import {z} from "genkit";
-
-${commandInputDeclarationCode}
-
-export const ${flowName} = ai.defineFlow(
-    {
-        name: "${flowName}",
-        inputSchema: z.object({
-            query: z.string()
-        }),
-        outputSchema: z.any(),
-    },
-    async (input) => {
-        // implementation
-        const response = await ai.generate({
-            prompt: input.query,
-        })
-
-        return response.text;
-    }
-);`
-}
-
-const onFlow_code = (data: ICommandInput, flowName: string) => {
-    return String.raw`
-import {ai} from "@/ai/ai";
-import {noAuth, onFlow} from "@genkit-ai/firebase/functions";
-import {z} from "genkit";
-
-${commandInputDeclarationCode}
-
-export const ${flowName} = onFlow(
-    ai,
-    {
-        name: '${flowName}',
-        authPolicy: noAuth(),${data.stream ? "streamSchema: z.string(),\n" : ""}
-        httpsOptions: {
-        },
-        inputSchema: z.object({
-            query: z.string(),
-        }),
-        outputSchema: z.any(),
-    },
-    async (input) => {
-        // implementation
-        const response = await ai.generate({
-            prompt: input.query,
-        })
-
-        return response.text;
-    }
-);
-`
+    };
+    const f = readFileSync(__dirname + `/make_flow/templates/${tplName}.ts.hbs`).toString()
+    return handlebars.compile(f, {
+        noEscape: true
+    })(data).toString();
 }

@@ -1,0 +1,28 @@
+
+import {ai} from "@/ai/ai";
+import {z} from "genkit";
+
+{{commandInputDeclarationCode}}
+
+export const {{flowName}} = ai.defineStreamingFlow(
+{
+    name: "{{flowName}}",
+    inputSchema: z.object({
+        query: z.string()
+    }),
+    outputSchema: z.any(),
+    streamSchema: z.any()
+},
+async (input, streamingCallback) => {
+    // implementation
+    const {response, stream} = await ai.generateStream({
+        prompt: input.query,
+    })
+    for await (const chunk of stream) {
+        if (streamingCallback) {
+            streamingCallback(chunk.text)
+        }
+    }
+    return await response;
+});
+
