@@ -5,7 +5,7 @@ import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 import {getParsedData} from "@/util/commandParser";
 import {omit} from "lodash";
 import {readFileSync} from "node:fs";
-import {readTemplate} from "@/commands/index";
+import {readHelpersCommonTsCode, readTemplate} from "@/commands/index";
 
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
@@ -49,7 +49,7 @@ export default function make_rag() {
         logDone(writePath)
     }
     const helpersCommonPath = srcPath(RAGS_DIR, 'helpers/common.ts')
-    const done2 = makeFile(helpersCommonPath, helpersCommonTsCode(), pdata.force, true)
+    const done2 = makeFile(helpersCommonPath, readHelpersCommonTsCode({dir: 'make_rag'}), pdata.force, true)
     if (done2) logDone(helpersCommonPath)
 
 }
@@ -71,9 +71,4 @@ const getRAGConsoleInputDeclarationCode = (pdata: ICommandInputSchema) => {
         entries.push(`const $${k} = ${JSON.stringify(val)};`)
     }
     return `\n` + entries.join(`\n`);
-}
-
-
-const helpersCommonTsCode = () => {
-    return readFileSync(__dirname + '/make_rag/helpers/common.ts').toString()
 }
