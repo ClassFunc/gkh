@@ -185,6 +185,7 @@ export const fsCommonRetrieverRetrieve = async ({
     Document[]
 > => {
     const _config = mergeConfig(config, withConfig);
+    options = {..._config, ...options}
     const docs = await ai.retrieve({
         retriever,
         query,
