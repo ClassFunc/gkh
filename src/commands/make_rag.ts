@@ -4,13 +4,13 @@ import {z} from "zod";
 import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 import {getParsedData} from "@/util/commandParser";
 import {omit} from "lodash";
-import * as handlebars from 'handlebars'
 import {readFileSync} from "node:fs";
+import {readTemplate} from "@/commands/index";
 
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     name: z.string(),
-    type: z.enum(['fs', 'firestore', 'simple', 'local', 'custom']).default("simple").optional(),
+    type: z.enum(['fs', 'firestore', 'simple', 'local', 'custom']).default("simple"),
     limit: z.number().default(5).optional(),
     collection: z.string().default("yourFirestoreCollection").optional(),
     contentField: z.string().default("contentField").optional(),
@@ -55,10 +55,11 @@ export default function make_rag() {
 }
 
 const getCode = (data: ICommandInputSchema) => {
-    const f = readFileSync(__dirname + `/make_rag/templates/${data.type}.ts.hbs`).toString()
-    return handlebars.compile(f, {
-        noEscape: true
-    })(data).toString();
+    return readTemplate({
+        dir: 'make_rag',
+        name: data.type,
+        data,
+    })
 }
 
 const getRAGConsoleInputDeclarationCode = (pdata: ICommandInputSchema) => {

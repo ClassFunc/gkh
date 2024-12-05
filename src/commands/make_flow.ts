@@ -6,7 +6,7 @@ import {existsSync, readFileSync} from "node:fs";
 import {camelCase} from "lodash";
 import {logDone} from "@/util/logger";
 import {isIncludes} from "@/util/strings";
-import handlebars from "handlebars";
+import {readTemplate} from "@/commands/index";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
@@ -85,8 +85,5 @@ const getTemplateCode = (data: ICommandInput, flowName: string) => {
             commandInputDeclarationCode
         }
     };
-    const f = readFileSync(__dirname + `/make_flow/templates/${tplName}.ts.hbs`).toString()
-    return handlebars.compile(f, {
-        noEscape: true
-    })(data).toString();
+    return readTemplate({name: tplName, data: data, dir: 'make_flow'})
 }

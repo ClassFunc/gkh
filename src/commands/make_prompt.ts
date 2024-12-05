@@ -3,6 +3,7 @@ import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 import {getCommandInputDeclarationCode, getParsedData} from "@/util/commandParser";
 import {makeFile, srcPath} from "@/util/pathUtils";
 import {logDone} from "@/util/logger";
+import {readTemplate} from "@/commands/index";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
@@ -30,32 +31,11 @@ export function make_prompt() {
 
 function get_code(data: ICommandInput) {
     // work with input
-
-    return `
-import {ai} from "@/ai/ai";
-import {z} from "genkit";
-
-${commandInputDeclarationCode}
-
-export const ${data.name}Prompt = ai.definePrompt(
-    {
-        name: $name + "Prompt",
-        description: $description,
-        variant: $variant,
-        model: $model || ai.options.model,
-        tools: [],
-        input: {
-            schema: z.object({
-                //prop1
-            })
-        },
-        output: {
-            schema: z.any()
-        }
-    },
-    \`You are a helpful AI assistant. {{prop1}} ...\`
-);
-// other codes...
-`;
+    return readTemplate({
+        dir: 'make_prompt',
+        name: 'definePrompt',
+        data: data,
+        addtionsData: {commandInputDeclarationCode}
+    })
 }
 

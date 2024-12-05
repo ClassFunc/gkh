@@ -1,0 +1,23 @@
+import {ai} from "@/ai/ai";
+import {z} from "genkit";
+
+{{commandInputDeclarationCode}}
+
+export const {{name}}Prompt = ai.definePrompt(
+{
+    name: "{{name}}Prompt",
+    description: $description,
+    variant: $variant,
+    model: $model || ai.options.model,
+    tools: [],
+    input: {
+        schema: z.object({
+            //props
+        }),
+    },
+    output: {
+        schema: z.any()
+    }
+},
+    `You are a helpful AI assistant. ...`
+);
