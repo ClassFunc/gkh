@@ -34,7 +34,7 @@ export const indexConfig: GKHIndexConfigSchema = {
 };
 
 export const {{name}}Retriever = defineFirestoreRetriever(ai, {
-    name: '${retrieverName}',
+    name: '{{name}}Retriever',
     firestore: getFirestore(),
     ...indexConfig,
 });
