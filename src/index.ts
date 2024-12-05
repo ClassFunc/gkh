@@ -93,13 +93,17 @@ gkhProgram
     .description("make:reranker")
     .argument("name", "reranker name")
     .option("-k, --topK [topK]", "topK", parseInt, 10)
-    .option("-r, --ref [ref]", "reference of reranker", "vertexai/semantic-ranker-512")
+    .option(
+        "-r, --ref [ref]",
+        "reference of reranker",
+        "vertexai/semantic-ranker-512",
+    )
     .action(make_reranker);
 
 gkhProgram
     .command("add:getAllFlows")
     .description("add:getAllFlows")
-    .option('-t, --type [type]', "for 'functions' | 'api'", 'api')
+    .option("-t, --type [type]", "for 'functions' | 'api'", "api")
     .action(add_getAllFlows);
 
 // NEXT_COMMAND__DONOTREMOVETHISLINE
