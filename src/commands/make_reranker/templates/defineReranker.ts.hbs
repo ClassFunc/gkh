@@ -1,0 +1,35 @@
+
+import {ai} from "@/ai/ai";
+import {doRerankFn, GKHRerankerConfigSchema, rerankerFnByRef} from "@/rerankers/helpers/common";
+import {z} from "genkit";
+
+{{commandInputDeclarationCode}}
+
+const defaultConfig: z.infer<typeof GKHRerankerConfigSchema> = {
+    k: $topK,
+    filter: ({score, metadata}) => {
+        return score > 0.1; //
+    }
+}
+
+export const {{name}}Reranker = ai.defineReranker(
+    {
+        name: "{{name}}Reranker",
+        configSchema: GKHRerankerConfigSchema.extend({
+            k: z.number().default($topK)
+        }),
+        // info
+    },
+    async (query, documents, options) => {
+        //implemetations
+        options = {
+            ...defaultConfig,
+            ...options,
+        }
+        return rerankerFnByRef($ref)(query, documents, options)
+    },
+);
+
+export const {{name}}RerankerRerank = doRerankFn({
+    reranker: {{name}}Reranker
+});

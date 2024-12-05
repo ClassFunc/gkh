@@ -21,3 +21,13 @@ export function readTemplate(
         noEscape: true
     })({...data, ...addtionsData}).toString();
 }
+
+export function readHelpersCommonTsCode(
+    {
+        dir
+    }: {
+        dir: string;
+    }
+) {
+    return readFileSync(__dirname + `/${dir}/helpers/common.ts`)
+}
