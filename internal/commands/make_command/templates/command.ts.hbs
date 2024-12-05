@@ -21,11 +21,8 @@ export function {{fnName}}() {
 function get_code(data: ICommandInput) {
     // work with input
 
-    return `
-    import {ai} from "@/ai/ai";
-
-    ${commandInputDeclarationCode}
-
-    // other codes...
-    `;
+    const fContent = readFileSync(__dirname + `/${makeX_DIR}/templates/${data.type}.ts.hbs`).toString()
+    return handlebars.compile(fContent, {
+        noEscape: true
+    })(data).toString();
 };
