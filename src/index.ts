@@ -13,6 +13,7 @@ import {make_prompt} from "@/commands/make_prompt";
 import {make_reranker} from "@/commands/make_reranker";
 
 import {add_getAllFlows} from "@/commands/add_getAllFlows";
+import {make_ai} from "@/commands/make_ai";
 // ENDS_IMPORT_DONOTREMOVETHISLINE
 const gkhProgram = new Command();
 
@@ -105,6 +106,10 @@ gkhProgram
     .description("add:getAllFlows")
     .option("-t, --type [type]", "for 'functions' | 'api'", "api")
     .action(add_getAllFlows);
+
+gkhProgram.command("make:ai").description("make:ai")
+    .option('-p,--path [path]', 'path for save ai instance', 'src/ai/ai.ts')
+    .action(make_ai);
 
 // NEXT_COMMAND__DONOTREMOVETHISLINE
 

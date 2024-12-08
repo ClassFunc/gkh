@@ -44,7 +44,7 @@ export function makeFile(fp: string,
     }
     const fileExists = fs.existsSync(fp)
     if (fileExists && !force) {
-        logWarning(`file ${fp} already exists; use --force to overwrite`)
+        logWarning(`file ${fp} already exists, use -f (--force) to overwrite; ... skipped`)
         return false;
     }
     fs.writeFileSync(fp, content, {encoding: 'utf-8'})

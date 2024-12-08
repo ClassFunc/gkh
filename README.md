@@ -13,6 +13,7 @@
 - [x] [make:prompt - make:prompt](#make:prompt)
 - [x] [make:reranker - make:reranker](#make:reranker)
 - [x] [add:getAllFlows - add:getAllFlows](#add:getAllFlows)
+- [x] [make:ai - make:ai](#make:ai)
 
 - [ ] Others things... (welcome any issue or PR)
 
@@ -139,6 +140,19 @@ add:getAllFlows
 Options:
   -t, --type [type]  for 'functions' | 'api' (default: "api")
   -h, --help         display help for command
+
+```
+
+### <a id="make:ai">make:ai</a>
+
+```
+Usage: gkh make:ai [options]
+
+make:ai
+
+Options:
+  -p,--path [path]  path for save ai instance (default: "src/ai/ai.ts")
+  -h, --help        display help for command
 
 ```
 

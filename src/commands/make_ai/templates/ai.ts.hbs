@@ -1,0 +1,18 @@
+import {genkit} from "genkit";
+import {vertexAI} from "@genkit-ai/vertexai";
+import {vertexAIRerankers} from "@genkit-ai/vertexai/rerankers";
+import * as process from "node:process";
+
+export const ai = genkit({
+    plugins: [
+        vertexAI({
+            projectId: process.env.GCLOUD_PROJECT!,
+            location: process.env.GCLOUD_LOCATION!,
+        }),
+        vertexAIRerankers({
+            rerankers: ['semantic-ranker-512'],
+            projectId: process.env.GCLOUD_PROJECT!,
+            location: process.env.GCLOUD_LOCATION!
+        }),
+    ],
+});

@@ -36,7 +36,7 @@ const logError = (...v: any[]) => {
 };
 
 const logWarning = (...v: any[]) => {
-    log("- 🟨", warningColor, ...v, endsColor);
+    log("🟨", warningColor, ...v, endsColor);
 };
 
 const logRunning = (...v: any[]) => {
