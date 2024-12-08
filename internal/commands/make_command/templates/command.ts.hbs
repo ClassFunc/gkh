@@ -1,7 +1,8 @@
 
 import {z} from "zod";
 import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
-import {getCommandInputDeclarationCode, getParsedData} from "@/util/commandParser";
+import {getCommandInputDeclarationCode, getParsedData,} from "@/util/commandParser";
+import {readTemplate} from "@/commands/index";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
@@ -9,7 +10,7 @@ const CommandInputSchema = GlobalCommandInputSchema.extend({
 
 type ICommandInput = z.infer<typeof CommandInputSchema>;
 let commandInputDeclarationCode = '';
-const makeX_DIR = "{{dirName}}";
+const makeX_DIR = "{{fnName}}";
 
 export function {{fnName}}() {
     const data = getParsedData(arguments, CommandInputSchema)
@@ -20,9 +21,9 @@ export function {{fnName}}() {
 
 function get_code(data: ICommandInput) {
     // work with input
-
-    const fContent = readFileSync(__dirname + `/${makeX_DIR}/templates/${data.type}.ts.hbs`).toString()
-    return handlebars.compile(fContent, {
-        noEscape: true
-    })(data).toString();
+    return readTemplate({
+        dir: `{{fnName}}`,
+        name: `your_template_name`,
+        data: data,
+    })
 };

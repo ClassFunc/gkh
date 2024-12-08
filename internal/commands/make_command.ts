@@ -8,7 +8,7 @@ import {existsSync, readFileSync} from "node:fs";
 import {getParsedData} from "../../src/util/commandParser";
 import {GlobalCommandInputSchema} from "../../src/types/GlobalCommandInputSchema";
 import {isIncludes} from "../../src/util/strings";
-import * as handlebars from "handlebars";
+import {readTemplate} from "./index";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     name: z.string().includes(":"),
@@ -45,7 +45,7 @@ export function make_command() {
     if (!isIncludes(indexTsContent, commandCode)) {
         indexTsContent = indexTsContent.replace(`// NEXT_COMMAND__DONOTREMOVETHISLINE`, commandCode + `\n// NEXT_COMMAND__DONOTREMOVETHISLINE`)
     }
-    const writeCmdDone = makeFile(idxFPath, indexTsContent, true)
+    const writeCmdDone = makeFile(idxFPath, indexTsContent, true, true)
     if (writeCmdDone) {
         logDone(idxFPath)
     }
@@ -60,10 +60,11 @@ const commandTsCode = (data: ICommandInput) => {
             dirName: commandFnName.split("_").pop(),
         }
     };
-    const f = readFileSync(__dirname + `/make_command/templates/command.ts.hbs`).toString()
-    return handlebars.compile(f, {
-        noEscape: true
-    })(data).toString();
+    return readTemplate({
+        dir: `make_command`,
+        name: `command`,
+        data,
+    })
 }
 
 const appendedIndexCode = (data: ICommandInput) => {
