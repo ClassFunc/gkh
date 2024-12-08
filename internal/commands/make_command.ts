@@ -4,7 +4,7 @@ import {logDone, logWarning} from "../../src/util/logger";
 import {z} from "zod";
 import {makeFile, srcPath} from "../../src/util/pathUtils";
 import * as path from "node:path";
-import {existsSync, readFileSync} from "node:fs";
+import {existsSync, mkdirSync, readFileSync} from "node:fs";
 import {getParsedData} from "../../src/util/commandParser";
 import {GlobalCommandInputSchema} from "../../src/types/GlobalCommandInputSchema";
 import {isIncludes} from "../../src/util/strings";
@@ -21,23 +21,27 @@ export function make_command() {
     const data = getParsedData(arguments, CommandInputSchema)
     commandFnName = data.name.replace(':', '_');
     const fPath = path.join(data.path, commandFnName) + `.ts`
-    const code = commandTsCode(data)
 
     if (existsSync(fPath) && !data.force) {
         logWarning(`${fPath} file exists. use --force to over-write`)
         logWarning(`...skipped.`)
         return;
-    } else {
-        const makeFpathDone = makeFile(fPath, code, data.force)
-        if (makeFpathDone) {
-            logDone(fPath)
-        }
+    }
+
+    // make code file
+    const code = commandTsCode(data)
+    const makeFpathDone = makeFile(fPath, code, data.force)
+    if (makeFpathDone) {
+        logDone(fPath)
+        const templatesDir = path.join(fPath.slice(0, -3), "templates");
+        mkdirSync(templatesDir, {recursive: true});
+        logDone(templatesDir)
     }
 
     const {importCode, commandCode} = appendedIndexCode(data)
 
+    // write index.ts
     const idxFPath = srcPath('index.ts')
-
     let indexTsContent = readFileSync(idxFPath).toString()
     if (!isIncludes(indexTsContent, importCode)) {
         indexTsContent = indexTsContent.replace(`// ENDS_IMPORT_DONOTREMOVETHISLINE`, importCode + `\n// ENDS_IMPORT_DONOTREMOVETHISLINE`)
@@ -47,7 +51,7 @@ export function make_command() {
     }
     const writeCmdDone = makeFile(idxFPath, indexTsContent, true, true)
     if (writeCmdDone) {
-        logDone(idxFPath)
+        logDone('updated', idxFPath)
     }
 }
 
@@ -57,7 +61,6 @@ const commandTsCode = (data: ICommandInput) => {
         ...data,
         ...{
             fnName: commandFnName,
-            dirName: commandFnName.split("_").pop(),
         }
     };
     return readTemplate({
