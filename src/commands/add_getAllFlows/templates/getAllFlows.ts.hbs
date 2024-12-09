@@ -1,9 +1,12 @@
 import {readdirSync, statSync} from "node:fs";
 import {FlowServerOptions} from "genkit";
+import {resolve} from 'node:path';
+
+{{commandInputDeclarationCode}}
 
 export async function getAllFlows() {
     type IFlows = FlowServerOptions['flows'];
-    const flowsDir = __dirname + {{flowsDirPath}} /*flowsDirPath*/
+    const flowsDir = resolve(__dirname, {{flowsDirPath}});
 
     const flows = await Promise.all(
         readdirSync(flowsDir).map(

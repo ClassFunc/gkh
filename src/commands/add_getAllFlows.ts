@@ -46,11 +46,11 @@ export function add_getAllFlows() {
 }
 
 const getAllFlows_code = (data: ICommandInput) => {
-    const flowsDirPath = data.type === 'functions' ? `'/flows';` : `'';`
+    const flowsDirPath = data.type === 'functions' ? '`/flows`' : '';
     return readTemplate({
         dir: `add_getAllFlows`,
         name: `getAllFlows.ts.hbs`,
         data: data,
-        addtionsData: {flowsDirPath}
+        addtionsData: {flowsDirPath, commandInputDeclarationCode}
     })
 }
