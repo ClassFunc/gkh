@@ -19,7 +19,7 @@ import {logDone} from "../src/util/logger";
     // }
     const {gkhProgram} = await import('../src/index')
     const mainFunctions = gkhProgram.commands.map(
-        c => `- [x] [${c.name()} - ${c.description()}](#${c.name()})`
+        c => `- [x] [${c.name()} - ${c.description().split('\n')[0]}](#${c.name()})`
     ).join("\n")
 
     const helpInformation = gkhProgram.commands.map(c => `

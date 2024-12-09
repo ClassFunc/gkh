@@ -6,16 +6,11 @@ Imagine you have genkit, and the library helps you complete your ideas with code
 
 - [x] [make:ai - make a genkit ai instance](#make:ai)
 - [x] [add:getAllFlows - add code snippet to read all your structured flows](#add:getAllFlows)
-- [x] [make:flow - make a flow
-      genkit docs: https://firebase.google.com/docs/genkit/flows](#make:flow)
-- [x] [make:rag - make a rag (indexer & retriever)
-      genkit docs: https://firebase.google.com/docs/genkit/rag](#make:rag)
-- [x] [make:tool - make a tool
-      genkit docs: https://firebase.google.com/docs/genkit/tool-calling](#make:tool)
-- [x] [make:prompt - make a prompt
-      genkit docs: https://firebase.google.com/docs/genkit/dotprompt](#make:prompt)
-- [x] [make:reranker - make a reranker
-      genkit docs: https://firebase.google.com/docs/genkit/rag#rerankers_and_two-stage_retrieval](#make:reranker)
+- [x] [make:flow - make a flow](#make:flow)
+- [x] [make:rag - make a rag (indexer & retriever)](#make:rag)
+- [x] [make:tool - make a tool](#make:tool)
+- [x] [make:prompt - make a prompt](#make:prompt)
+- [x] [make:reranker - make a reranker](#make:reranker)
 - [x] [docs:gen - generate openapi documents](#docs:gen)
 
 ## Usage
