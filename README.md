@@ -4,14 +4,19 @@ Imagine you have genkit, and the library helps you complete your ideas with code
 
 ## Main functions
 
-- [x] [docs:gen - generate openapi documents](#docs:gen)
-- [x] [make:flow - make a flow; seemore genkit-doc: https://firebase.google.com/docs/genkit/flows](#make:flow)
-- [x] [make:rag - make a rag (indexer & retriever); seemore genkit-doc: https://firebase.google.com/docs/genkit/rag](#make:rag)
-- [x] [make:tool - make a tool; seemore genkit-doc: https://firebase.google.com/docs/genkit/tool-calling](#make:tool)
-- [x] [make:prompt - make a prompt; seemore genkit-doc: https://firebase.google.com/docs/genkit/dotprompt](#make:prompt)
-- [x] [make:reranker - make a reranker; seemore genkit-doc: https://firebase.google.com/docs/genkit/rag#rerankers_and_two-stage_retrieval](#make:reranker)
+- [x] [make:ai - make a genkit ai instance](#make:ai)
 - [x] [add:getAllFlows - add code snippet to read all your structured flows](#add:getAllFlows)
-- [x] [make:ai - make an genkit ai instance](#make:ai)
+- [x] [make:flow - make a flow
+      genkit docs: https://firebase.google.com/docs/genkit/flows](#make:flow)
+- [x] [make:rag - make a rag (indexer & retriever)
+      genkit docs: https://firebase.google.com/docs/genkit/rag](#make:rag)
+- [x] [make:tool - make a tool
+      genkit docs: https://firebase.google.com/docs/genkit/tool-calling](#make:tool)
+- [x] [make:prompt - make a prompt
+      genkit docs: https://firebase.google.com/docs/genkit/dotprompt](#make:prompt)
+- [x] [make:reranker - make a reranker
+      genkit docs: https://firebase.google.com/docs/genkit/rag#rerankers_and_two-stage_retrieval](#make:reranker)
+- [x] [docs:gen - generate openapi documents](#docs:gen)
 
 ## Usage
 
@@ -22,18 +27,29 @@ npm i -g gkh
 # then starting use `gk` or `gkh` command on your top of genkit project
 ```
 
-### <a id="docs:gen">docs:gen</a>
+### <a id="make:ai">make:ai</a>
 
 ```
-Usage: gkh docs:gen [options]
+Usage: gkh make:ai [options]
 
-generate openapi documents
+make a genkit ai instance
 
 Options:
-  -n, --name <name>          name of yaml file; defauls: api (default: "api")
-  -o, --out <out>            output docs directory; defaults: ./docs (default: "./docs")
-  -e, --env-file <env-file>  env file path; defaults: .env (default: ".env")
-  -h, --help                 display help for command
+  -p,--path [path]  path for save ai instance (default: "src/ai/ai.ts")
+  -h, --help        display help for command
+
+```
+
+### <a id="add:getAllFlows">add:getAllFlows</a>
+
+```
+Usage: gkh add:getAllFlows [options]
+
+add code snippet to read all your structured flows
+
+Options:
+  -t, --type [type]  for 'functions' | 'api' (default: "api")
+  -h, --help         display help for command
 
 ```
 
@@ -42,13 +58,14 @@ Options:
 ```
 Usage: gkh make:flow [options] <name>
 
-make a flow; seemore genkit-doc: https://firebase.google.com/docs/genkit/flows
+make a flow
+genkit docs: https://firebase.google.com/docs/genkit/flows
 
 Arguments:
   name                   name of flow, separated by / , ex: users/list
 
 Options:
-  -s, --stream [stream]  streaming flow or not; default: false (default: false)
+  -s, --stream [stream]  flow is streaming or not (default: false)
   -t, --type [type]      supported 'defineFlow', 'onFlow' (default: "defineFlow")
   -h, --help             display help for command
 
@@ -59,14 +76,14 @@ Options:
 ```
 Usage: gkh make:rag [options] <name>
 
-make a rag (indexer & retriever); seemore genkit-doc: https://firebase.google.com/docs/genkit/rag
+make a rag (indexer & retriever)
+genkit docs: https://firebase.google.com/docs/genkit/rag
 
 Arguments:
   name                                rag name; ex: menuQA
 
 Options:
-  -t, --type [type]                   type of vectorstore; supported 'fs'('firestore'), 'simple','local',
-                                      'custom'  (default: "simple")
+  -t, --type [type]                   type of vectorstore; supported 'fs'('firestore'), 'simple','local', 'custom'  (default: "simple")
   -l, --limit [limit]                 retriever's limit (default: 5)
   -c, --collection [collection]       firestore collection (default: "yourFirestoreCollection")
   -cf, --contentField [contentField]  contentField (default: "contentField")
@@ -80,7 +97,8 @@ Options:
 ```
 Usage: gkh make:tool [options] <name>
 
-make a tool; seemore genkit-doc: https://firebase.google.com/docs/genkit/tool-calling
+make a tool
+genkit docs: https://firebase.google.com/docs/genkit/tool-calling
 
 Arguments:
   name                             tool name
@@ -96,7 +114,8 @@ Options:
 ```
 Usage: gkh make:prompt [options] <name>
 
-make a prompt; seemore genkit-doc: https://firebase.google.com/docs/genkit/dotprompt
+make a prompt
+genkit docs: https://firebase.google.com/docs/genkit/dotprompt
 
 Arguments:
   name                             prompt name
@@ -114,8 +133,8 @@ Options:
 ```
 Usage: gkh make:reranker [options] <name>
 
-make a reranker; seemore genkit-doc:
-https://firebase.google.com/docs/genkit/rag#rerankers_and_two-stage_retrieval
+make a reranker
+genkit docs: https://firebase.google.com/docs/genkit/rag#rerankers_and_two-stage_retrieval
 
 Arguments:
   name               reranker name
@@ -127,29 +146,18 @@ Options:
 
 ```
 
-### <a id="add:getAllFlows">add:getAllFlows</a>
+### <a id="docs:gen">docs:gen</a>
 
 ```
-Usage: gkh add:getAllFlows [options]
+Usage: gkh docs:gen [options]
 
-add code snippet to read all your structured flows
+generate openapi documents
 
 Options:
-  -t, --type [type]  for 'functions' | 'api' (default: "api")
-  -h, --help         display help for command
-
-```
-
-### <a id="make:ai">make:ai</a>
-
-```
-Usage: gkh make:ai [options]
-
-make an genkit ai instance
-
-Options:
-  -p,--path [path]  path for save ai instance (default: "src/ai/ai.ts")
-  -h, --help        display help for command
+  -n, --name <name>          name of yaml file (default: "api")
+  -o, --out <out>            output docs directory (default: "./docs")
+  -e, --env-file <env-file>  env file path (default: ".env")
+  -h, --help                 display help for command
 
 ```
 

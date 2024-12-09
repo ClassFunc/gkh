@@ -15,6 +15,7 @@ import {make_reranker} from "@/commands/make_reranker";
 import {add_getAllFlows} from "@/commands/add_getAllFlows";
 import {make_ai} from "@/commands/make_ai";
 // ENDS_IMPORT_DONOTREMOVETHISLINE
+
 const gkhProgram = new Command();
 
 gkhProgram
@@ -24,28 +25,30 @@ gkhProgram
         process.exit(0);
     });
 
+gkhProgram.command("make:ai")
+    .description("make a genkit ai instance")
+    .option('-p,--path [path]', 'path for save ai instance', 'src/ai/ai.ts')
+    .action(make_ai);
+
+
 gkhProgram
-    .command("docs:gen")
-    .description("generate openapi documents")
-    .option("-n, --name <name>", "name of yaml file; defauls: api", "api")
-    .option(
-        "-o, --out <out>",
-        "output docs directory; defaults: ./docs",
-        "./docs",
-    )
-    .option("-e, --env-file <env-file>", "env file path; defaults: .env", ".env")
-    .action(docs_gen);
+    .command("add:getAllFlows")
+    .description("add code snippet to read all your structured flows")
+    .option("-t, --type [type]", "for 'functions' | 'api'", "api")
+    .action(add_getAllFlows);
+
 gkhProgram
     .command("make:flow")
     .argument("<name>", "name of flow, separated by / , ex: users/list")
     .option(
         "-s, --stream [stream]",
-        "streaming flow or not; default: false",
+        "flow is streaming or not",
         false,
     )
     .option("-t, --type [type]", "supported 'defineFlow', 'onFlow'", "defineFlow")
-    .description("make a flow; seemore genkit-doc: https://firebase.google.com/docs/genkit/flows")
+    .description("make a flow\ngenkit docs: https://firebase.google.com/docs/genkit/flows")
     .action(make_flow);
+
 gkhProgram
     .command("make:rag")
     .argument("<name>", "rag name; ex: menuQA")
@@ -66,12 +69,12 @@ gkhProgram
         `vectorField; default: $contentField + '_' + embedder.name`,
         "",
     )
-    .description("make a rag (indexer & retriever); seemore genkit-doc: https://firebase.google.com/docs/genkit/rag")
+    .description("make a rag (indexer & retriever)\ngenkit docs: https://firebase.google.com/docs/genkit/rag")
     .action(make_rag);
 
 gkhProgram
     .command("make:tool")
-    .description("make a tool; seemore genkit-doc: https://firebase.google.com/docs/genkit/tool-calling")
+    .description("make a tool\ngenkit docs: https://firebase.google.com/docs/genkit/tool-calling")
     .argument("name", "tool name")
     .option(
         "-d, --description [description]",
@@ -82,7 +85,7 @@ gkhProgram
 
 gkhProgram
     .command("make:prompt")
-    .description("make a prompt; seemore genkit-doc: https://firebase.google.com/docs/genkit/dotprompt")
+    .description("make a prompt\ngenkit docs: https://firebase.google.com/docs/genkit/dotprompt")
     .argument("name", "prompt name")
     .option("-d, --description [description]", "prompt description", "")
     .option("-v, --variant [variant]", "variant", "")
@@ -91,7 +94,7 @@ gkhProgram
 
 gkhProgram
     .command("make:reranker")
-    .description("make a reranker; seemore genkit-doc: https://firebase.google.com/docs/genkit/rag#rerankers_and_two-stage_retrieval")
+    .description("make a reranker\ngenkit docs: https://firebase.google.com/docs/genkit/rag#rerankers_and_two-stage_retrieval")
     .argument("name", "reranker name")
     .option("-k, --topK [topK]", "topK", parseInt, 10)
     .option(
@@ -101,16 +104,18 @@ gkhProgram
     )
     .action(make_reranker);
 
-gkhProgram
-    .command("add:getAllFlows")
-    .description("add code snippet to read all your structured flows")
-    .option("-t, --type [type]", "for 'functions' | 'api'", "api")
-    .action(add_getAllFlows);
 
-gkhProgram.command("make:ai")
-    .description("make an genkit ai instance")
-    .option('-p,--path [path]', 'path for save ai instance', 'src/ai/ai.ts')
-    .action(make_ai);
+gkhProgram
+    .command("docs:gen")
+    .description("generate openapi documents")
+    .option("-n, --name <name>", "name of yaml file", "api")
+    .option(
+        "-o, --out <out>",
+        "output docs directory",
+        "./docs",
+    )
+    .option("-e, --env-file <env-file>", "env file path", ".env")
+    .action(docs_gen);
 
 // NEXT_COMMAND__DONOTREMOVETHISLINE
 
