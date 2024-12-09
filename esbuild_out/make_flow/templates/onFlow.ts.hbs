@@ -1,0 +1,27 @@
+import {ai} from "@/ai/ai";
+import {noAuth, onFlow} from "@genkit-ai/firebase/functions";
+import {z} from "genkit";
+
+{{commandInputDeclarationCode}}
+
+export const {{flowName}} = onFlow(ai,
+{
+    name: '{{flowName}}',
+    authPolicy: noAuth(),
+    httpsOptions: {
+        cors: '*',
+    },
+    inputSchema: z.object({
+        query: z.string(),
+    }),
+    outputSchema: z.any(),
+    streamSchema: z.string(),
+},
+async (input, streamingCallback) => {
+    // implementation
+    const response = await ai.generate({
+        prompt: input.query,
+    })
+
+    return response.text;
+});

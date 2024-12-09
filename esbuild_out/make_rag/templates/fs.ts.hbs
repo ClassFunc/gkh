@@ -1,0 +1,115 @@
+import {defineFirestoreRetriever} from "@genkit-ai/firebase";
+import {DocumentReference, getFirestore, Query, WriteResult} from "firebase-admin/firestore";
+import {Document, RetrieverParams} from "genkit";
+import {ai} from "@/ai/ai";
+import {
+    defaultEmbedder,
+    fsCommonIndexerAdd,
+    fsCommonIndexerUpdate,
+    fsCommonRetrieverRetrieve,
+    fsCommonRetrieverRetrieveWithPreFilter,
+    FSQueryRetrieverRetrieveParams,
+    GKHIndexConfigSchema,
+    GKHIndexerActionParams,
+    GKHRetrieverActionParams,
+    vectorFieldName,
+} from "@/rags/helpers/common";
+
+{{RAGConsoleInputDeclarationCode}}
+
+const embedder = defaultEmbedder;
+const $indexerEmbedTaskType = "RETRIEVAL_DOCUMENT";
+const $retrieverEmbedTaskType = "RETRIEVAL_QUERY";
+
+export const indexConfig: GKHIndexConfigSchema = {
+    collection: $collection,
+    contentField: $contentField,
+    vectorField: $vectorField || vectorFieldName($contentField, embedder.name),
+    embedder: embedder, //
+    metadataFields: [], // fields from collection record
+    distanceResultField: '_distance',
+    distanceMeasure: "COSINE", // "EUCLIDEAN", "DOT_PRODUCT", or "COSINE" (default)
+    distanceThreshold: 0.7,
+    limit: $limit,
+};
+
+export const {{name}}Retriever = defineFirestoreRetriever(ai, {
+    name: '{{name}}Retriever',
+    firestore: getFirestore(),
+    ...indexConfig,
+});
+
+export const {{name}}RetrieverRetrieveWithPreFilter = async (
+    preFilterQuery: Query,
+    {
+        query,
+        withReranker,
+        embedTaskType = $retrieverEmbedTaskType,
+        withConfig = {},
+    }: FSQueryRetrieverRetrieveParams): Promise<Document[]> => {
+    return await fsCommonRetrieverRetrieveWithPreFilter(
+        preFilterQuery,
+        {
+            query,
+            withReranker,
+            embedTaskType,
+            withConfig,
+            config: indexConfig,
+        }
+    );
+};
+
+export const {{name}}RetrieverRetrieve = async (
+    {
+        query,
+        options,
+        withReranker,
+        withConfig = {},
+    }: Omit<RetrieverParams, 'retriever'>
+        & Pick<GKHRetrieverActionParams, 'withReranker' | 'withConfig'>
+)
+    : Promise<Document[]> => {
+    return fsCommonRetrieverRetrieve({
+        retriever: {{name}}Retriever,
+        query,
+        options,
+        withReranker,
+        withConfig,
+        config: indexConfig,
+    });
+};
+
+export async function {{name}}IndexerAdd({
+                                           content,
+                                           additionData = {},
+                                           embedTaskType = $indexerEmbedTaskType,
+                                           withConfig = {},
+                                       }: GKHIndexerActionParams): Promise<DocumentReference> {
+
+    return await fsCommonIndexerAdd(
+        {
+            content,
+            additionData,
+            embedTaskType,
+            withConfig,
+            config:indexConfig,
+        }
+    );
+}
+
+export async function {{name}}IndexerUpdate(
+    docRef: DocumentReference,
+    {content, additionData = {}, embedTaskType = $indexerEmbedTaskType, withConfig = {},updateMethod}: GKHIndexerActionParams,
+): Promise<WriteResult> {
+    return await fsCommonIndexerUpdate(
+        docRef,
+        {
+            content,
+            additionData,
+            embedTaskType,
+            withConfig,
+            config:indexConfig,
+            updateMethod,
+        }
+    );
+}

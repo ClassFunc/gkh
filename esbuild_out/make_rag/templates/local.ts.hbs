@@ -1,0 +1,60 @@
+
+import {devLocalIndexerRef, devLocalRetrieverRef, devLocalVectorstore} from "@genkit-ai/dev-local-vectorstore";
+import {Document, IndexerParams} from "genkit";
+import {
+    commonIndexerIndex,
+    commonRetrieverRetrieve,
+    defaultEmbedder,
+    GKHRetrieverActionParams,
+    GKHRetrieverParams,
+    mergeConfig
+} from "@/rags/helpers/common";
+
+{{RAGConsoleInputDeclarationCode}}
+
+/*
+{{name}}LocalVectorstorePlugin
+add this plugin to your ai instance's plugins: e.g: genkit({ plugins: [{{name}}LocalVectorstorePlugin] })
+* */
+export const {{name}}LocalVectorstorePlugin = devLocalVectorstore([
+    {
+        indexName: $name,
+        embedder: defaultEmbedder,
+    },
+]);
+
+export const {{name}}Indexer = devLocalIndexerRef($name);
+export const {{name}}Retriever = devLocalRetrieverRef($name);
+
+export const {{name}}IndexerIndex = async (
+    {
+        documents,
+        options,
+    }: {
+        documents: Array<Document | string>;
+        options: IndexerParams["options"];
+    }) => {
+    return commonIndexerIndex({
+        indexer: {{name}}Indexer,
+        documents,
+        options,
+    })
+}
+
+export const {{name}}RetrieverRetrieve = async (
+    {
+        query,
+        options,
+        withReranker,
+        withConfig = {},
+    }: GKHRetrieverParams
+        & Pick<GKHRetrieverActionParams, 'withConfig' | 'withReranker'>): Promise<Array<Document>> => {
+    return commonRetrieverRetrieve({
+        retriever: {{name}}Retriever,
+        query,
+        options,
+        withReranker,
+        config: mergeConfig({k: $limit}, options, withConfig),
+    })
+};
+
