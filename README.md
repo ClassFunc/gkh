@@ -1,21 +1,17 @@
 # GKH: Genkit helper
 
-## Why we created this library:
-
-- Genkit requires a standard file structure for managing flows.
+Imagine you have genkit, and the library helps you complete your ideas with code snippets.
 
 ## Main functions
 
 - [x] [docs:gen - generate openapi documents](#docs:gen)
-- [x] [make:flow - generate a flow](#make:flow)
-- [x] [make:rag - generate a rag](#make:rag)
-- [x] [make:tool - make:tool](#make:tool)
-- [x] [make:prompt - make:prompt](#make:prompt)
-- [x] [make:reranker - make:reranker](#make:reranker)
-- [x] [add:getAllFlows - add:getAllFlows](#add:getAllFlows)
-- [x] [make:ai - make:ai](#make:ai)
-
-- [ ] Others things... (welcome any issue or PR)
+- [x] [make:flow - make a flow; seemore genkit-doc: https://firebase.google.com/docs/genkit/flows](#make:flow)
+- [x] [make:rag - make a rag (indexer & retriever); seemore genkit-doc: https://firebase.google.com/docs/genkit/rag](#make:rag)
+- [x] [make:tool - make a tool; seemore genkit-doc: https://firebase.google.com/docs/genkit/tool-calling](#make:tool)
+- [x] [make:prompt - make a prompt; seemore genkit-doc: https://firebase.google.com/docs/genkit/dotprompt](#make:prompt)
+- [x] [make:reranker - make a reranker; seemore genkit-doc: https://firebase.google.com/docs/genkit/rag#rerankers_and_two-stage_retrieval](#make:reranker)
+- [x] [add:getAllFlows - add code snippet to read all your structured flows](#add:getAllFlows)
+- [x] [make:ai - make an genkit ai instance](#make:ai)
 
 ## Usage
 
@@ -46,7 +42,7 @@ Options:
 ```
 Usage: gkh make:flow [options] <name>
 
-generate a flow
+make a flow; seemore genkit-doc: https://firebase.google.com/docs/genkit/flows
 
 Arguments:
   name                   name of flow, separated by / , ex: users/list
@@ -63,14 +59,14 @@ Options:
 ```
 Usage: gkh make:rag [options] <name>
 
-generate a rag
+make a rag (indexer & retriever); seemore genkit-doc: https://firebase.google.com/docs/genkit/rag
 
 Arguments:
   name                                rag name; ex: menuQA
 
 Options:
-  -t, --type [type]                   type of vectorstore; supported 'fs'('firestore'), 'simple','local', 'custom'
-                                      (default: "simple")
+  -t, --type [type]                   type of vectorstore; supported 'fs'('firestore'), 'simple','local',
+                                      'custom'  (default: "simple")
   -l, --limit [limit]                 retriever's limit (default: 5)
   -c, --collection [collection]       firestore collection (default: "yourFirestoreCollection")
   -cf, --contentField [contentField]  contentField (default: "contentField")
@@ -84,7 +80,7 @@ Options:
 ```
 Usage: gkh make:tool [options] <name>
 
-make:tool
+make a tool; seemore genkit-doc: https://firebase.google.com/docs/genkit/tool-calling
 
 Arguments:
   name                             tool name
@@ -100,7 +96,7 @@ Options:
 ```
 Usage: gkh make:prompt [options] <name>
 
-make:prompt
+make a prompt; seemore genkit-doc: https://firebase.google.com/docs/genkit/dotprompt
 
 Arguments:
   name                             prompt name
@@ -118,7 +114,8 @@ Options:
 ```
 Usage: gkh make:reranker [options] <name>
 
-make:reranker
+make a reranker; seemore genkit-doc:
+https://firebase.google.com/docs/genkit/rag#rerankers_and_two-stage_retrieval
 
 Arguments:
   name               reranker name
@@ -135,7 +132,7 @@ Options:
 ```
 Usage: gkh add:getAllFlows [options]
 
-add:getAllFlows
+add code snippet to read all your structured flows
 
 Options:
   -t, --type [type]  for 'functions' | 'api' (default: "api")
@@ -148,7 +145,7 @@ Options:
 ```
 Usage: gkh make:ai [options]
 
-make:ai
+make an genkit ai instance
 
 Options:
   -p,--path [path]  path for save ai instance (default: "src/ai/ai.ts")
@@ -160,7 +157,7 @@ Options:
 
 - Q: I don't see any flows on Developer UI.
 
-- A: please add this lines to your `src/index.ts`:
+- A: run `gkh add:getAllFlows` OR add this lines to your `src/index.ts`:
 
 ```ts
 // configureGenkit({}) ...

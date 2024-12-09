@@ -44,7 +44,7 @@ gkhProgram
         false,
     )
     .option("-t, --type [type]", "supported 'defineFlow', 'onFlow'", "defineFlow")
-    .description("generate a flow")
+    .description("make a flow; seemore genkit-doc: https://firebase.google.com/docs/genkit/flows")
     .action(make_flow);
 gkhProgram
     .command("make:rag")
@@ -66,12 +66,12 @@ gkhProgram
         `vectorField; default: $contentField + '_' + embedder.name`,
         "",
     )
-    .description("generate a rag")
+    .description("make a rag (indexer & retriever); seemore genkit-doc: https://firebase.google.com/docs/genkit/rag")
     .action(make_rag);
 
 gkhProgram
     .command("make:tool")
-    .description("make:tool")
+    .description("make a tool; seemore genkit-doc: https://firebase.google.com/docs/genkit/tool-calling")
     .argument("name", "tool name")
     .option(
         "-d, --description [description]",
@@ -82,7 +82,7 @@ gkhProgram
 
 gkhProgram
     .command("make:prompt")
-    .description("make:prompt")
+    .description("make a prompt; seemore genkit-doc: https://firebase.google.com/docs/genkit/dotprompt")
     .argument("name", "prompt name")
     .option("-d, --description [description]", "prompt description", "")
     .option("-v, --variant [variant]", "variant", "")
@@ -91,7 +91,7 @@ gkhProgram
 
 gkhProgram
     .command("make:reranker")
-    .description("make:reranker")
+    .description("make a reranker; seemore genkit-doc: https://firebase.google.com/docs/genkit/rag#rerankers_and_two-stage_retrieval")
     .argument("name", "reranker name")
     .option("-k, --topK [topK]", "topK", parseInt, 10)
     .option(
@@ -103,12 +103,12 @@ gkhProgram
 
 gkhProgram
     .command("add:getAllFlows")
-    .description("add:getAllFlows")
+    .description("add code snippet to read all your structured flows")
     .option("-t, --type [type]", "for 'functions' | 'api'", "api")
     .action(add_getAllFlows);
 
 gkhProgram.command("make:ai")
-    .description("make an genkit ai instance with default j")
+    .description("make an genkit ai instance")
     .option('-p,--path [path]', 'path for save ai instance', 'src/ai/ai.ts')
     .action(make_ai);
 

@@ -1,14 +1,10 @@
 # GKH: Genkit helper
 
-## Why we created this library:
-
-- Genkit requires a standard file structure for managing flows.
+Imagine you have genkit, and the library helps you complete your ideas with code snippets.
 
 ## Main functions
 
 {{mainFunctions}}
-
-- [ ] Others things... (welcome any issue or PR)
 
 ## Usage
 
@@ -25,7 +21,7 @@ npm i -g gkh
 
 - Q: I don't see any flows on Developer UI.
 
-- A: please add this lines to your `src/index.ts`:
+- A: run `gkh add:getAllFlows` OR add this lines to your `src/index.ts`:
 
 ```ts
 // configureGenkit({}) ... 
