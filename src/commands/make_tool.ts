@@ -3,6 +3,7 @@ import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 import {getCommandInputDeclarationCode, getParsedData} from "@/util/commandParser";
 import {makeFile, srcPath} from "@/util/pathUtils";
 import {logDone} from "@/util/logger";
+import {readTemplate} from "@/commands/index";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
@@ -29,26 +30,14 @@ export function make_tool() {
 
 export function get_code(data: ICommandInput) {
     // work with input
-
-    return `
-import {ai} from "@/ai/ai";
-import {z} from "genkit";
-
-${commandInputDeclarationCode}
-
-const ${data.name}Tool = ai.defineTool(
-  {
-    name: $name + "Tool",
-    description: $description,
-    inputSchema: z.any(),
-    outputSchema: z.any(),
-  },
-  async (input) => {
-    //implementation
-    
-  }
-);
-
-`;
+    console.log({...data, commandInputDeclarationCode})
+    return readTemplate(
+        {
+            dir: `make_tool`,
+            name: `defineTool`,
+            data: data,
+            addtionsData: {commandInputDeclarationCode}
+        }
+    )
 }
 
