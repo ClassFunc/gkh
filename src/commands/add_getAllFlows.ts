@@ -5,6 +5,7 @@ import {readFileSync} from "node:fs";
 import {makeFile, srcPath} from "@/util/pathUtils";
 import {isIncludes} from "@/util/strings";
 import {logDone} from "@/util/logger";
+import {readTemplate} from "@/commands/index";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
@@ -28,7 +29,7 @@ export function add_getAllFlows() {
                 //write
                 const done = makeFile(idxPath, srcIndexTsCode + code, data.force, true)
                 if (done) {
-                    logDone(idxPath)
+                    logDone('updated', idxPath)
                 }
             }
             break;
@@ -38,64 +39,18 @@ export function add_getAllFlows() {
             const writeTo = srcPath(`/flows/index.ts`)
             const done = makeFile(writeTo, code, data.force, true)
             if (done) {
-                logDone(writeTo)
+                logDone('updated', writeTo)
             }
             break;
     }
 }
 
-function get_code(data: ICommandInput) {
-    // work with input
-
-    return `
-import {ai} from "@/ai/ai";
-
-${commandInputDeclarationCode}
-
-// other codes...
-`;
-}
-
-
 const getAllFlows_code = (data: ICommandInput) => {
-
-    return `
-import {readdirSync, statSync} from "node:fs";
-import {FlowServerOptions} from "genkit";
-
-export async function getAllFlows() {
-    type IFlows = FlowServerOptions['flows'];
-    const flowsDir = __dirname ${data.type === 'functions' ? `+ '/flows';` : ';'};
-
-    const flows = await Promise.all(
-        readdirSync(flowsDir).map(
-            async (name) => {
-                if (!statSync(\`\${flowsDir}/\${name}\`).isDirectory()) {
-                    return;
-                }
-                try {
-                    const flowList = require(\`\${flowsDir}/\${name}/flows.js\`);
-                    if (flowList) {
-                        return Object.entries(flowList).map(([k, val]) => {
-                            // console.log(k, val)
-                            if (!val?.hasOwnProperty("flow")) {
-                                return;
-                            }
-                            exports[k] = val;
-                            return val;
-                        })
-                    }
-                } catch (e: any) {
-                    console.log(e);
-                }
-                return;
-            }
-        )
-    )
-    return flows.flat().filter(Boolean) as IFlows;
-}
-
-// getAllFlows()
-
-`
+    const flowsDirPath = data.type === 'functions' ? `'/flows';` : `'';`
+    return readTemplate({
+        dir: `add_getAllFlows`,
+        name: `getAllFlows.ts.hbs`,
+        data: data,
+        addtionsData: {flowsDirPath}
+    })
 }

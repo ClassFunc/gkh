@@ -1,0 +1,36 @@
+import {readdirSync, statSync} from "node:fs";
+import {FlowServerOptions} from "genkit";
+
+export async function getAllFlows() {
+    type IFlows = FlowServerOptions['flows'];
+    const flowsDir = __dirname + {{flowsDirPath}} /*flowsDirPath*/
+
+    const flows = await Promise.all(
+        readdirSync(flowsDir).map(
+            async (name) => {
+                if (!statSync(`${flowsDir}/${name}`).isDirectory()) {
+                    return;
+                }
+                try {
+                    const flowList = require(`${flowsDir}/${name}/flows.js`);
+                    if (flowList) {
+                        return Object.entries(flowList).map(([k, val]) => {
+                            // console.log(k, val)
+                            if (!val?.hasOwnProperty("flow")) {
+                                return;
+                            }
+                            exports[k] = val;
+                            return val;
+                        })
+                    }
+                } catch (e: any) {
+                    console.log(e);
+                }
+                return;
+            }
+        )
+    )
+    return flows.flat().filter(Boolean) as IFlows;
+}
+
+// getAllFlows()
