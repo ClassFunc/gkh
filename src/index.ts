@@ -107,7 +107,8 @@ gkhProgram
     .option("-t, --type [type]", "for 'functions' | 'api'", "api")
     .action(add_getAllFlows);
 
-gkhProgram.command("make:ai").description("make:ai")
+gkhProgram.command("make:ai")
+    .description("make an genkit ai instance with default j")
     .option('-p,--path [path]', 'path for save ai instance', 'src/ai/ai.ts')
     .action(make_ai);
 

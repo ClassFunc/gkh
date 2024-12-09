@@ -8,7 +8,9 @@ export const {{flowName}} = onFlow(ai,
 {
     name: '{{flowName}}',
     authPolicy: noAuth(),
-    httpsOptions: {},
+    httpsOptions: {
+        cors: '*',
+    },
     inputSchema: z.object({
         query: z.string(),
     }),
