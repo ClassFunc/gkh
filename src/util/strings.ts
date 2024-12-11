@@ -1,3 +1,11 @@
 export const isIncludes = (src: string, text: string): boolean => {
-    return src.replace(/\s/g, '').includes(text.replace(/\s/g, ''))
+    const srcJS = src
+        .replace(/["']/g, '"')
+        .replace(/\s/g, '')
+    const textJS =
+        text
+            .replace(/["']/g, '"')
+            .replace(/\s/g, '')
+
+    return srcJS.includes(textJS)
 }
