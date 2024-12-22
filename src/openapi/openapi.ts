@@ -5,8 +5,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import {configDotenv} from "dotenv";
 import {upperFirst} from "lodash";
-import {libFlowsPath} from "@/util/pathUtils";
-import {logRunning, logWarning} from "@/util/logger";
+import {getPakageJson, getTsConfig, buildOutFlowsPath} from "@/util/pathUtils";
+import {logDone, logRunning, logWarning} from "@/util/logger";
 import {IDocsGenInputSchema} from "@/commands/docs_gen";
 
 extendZodWithOpenApi(z);
@@ -57,9 +57,9 @@ const ApiKeyAuth = registry.registerComponent('securitySchemes', 'ApiKeyAuth', {
 
 
 // read all flows in /flows dir
-fs.readdirSync(libFlowsPath()).forEach(
+fs.readdirSync(buildOutFlowsPath()).forEach(
     flowDir => {
-        const dir = path.join(libFlowsPath(), flowDir)
+        const dir = path.join(buildOutFlowsPath(), flowDir)
         const stat = fs.statSync(dir);
         if (!stat.isDirectory()) {
             return;
@@ -230,10 +230,6 @@ function registryFlowInDir({flowList, tags}: z.infer<typeof RegistryFlowInDirInp
     }
 }
 
-function getPakageJson(): Record<string, any> {
-    const p = path.resolve('package.json')
-    return JSON.parse(fs.readFileSync(p).toString()) as Record<string, any>
-}
 
 function getOpenApiDocumentation() {
     //read package.json
@@ -319,6 +315,7 @@ ${yaml.stringify(generatedContent)}
             encoding: 'utf-8',
         }
     );
+    logDone(`docs available at: ${process.env.DOCS_ENDPOINT}`)
 }
 
 function docsDir(out: string, otherPath: string) {

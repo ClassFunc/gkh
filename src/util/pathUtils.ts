@@ -11,6 +11,7 @@ import {execSync} from "node:child_process";
 //     "import { Something } from './somewhere';", // This will be skipped
 // ];
 import * as fs from 'fs';
+import {get} from "lodash";
 
 function getCwd(...p: string[]): string {
     const cwd = process.cwd();
@@ -58,12 +59,41 @@ export function srcPath(...p: string[]): string {
     return getCwd('src', ...p);
 }
 
-export function libPath(...p: string[]): string {
-    return getCwd('lib', ...p);
+export function buildOutPath(...p: string[]): string {
+    return getCwd(getTsConfig('compilerOptions.outDir'), ...p);
 }
 
-export function libFlowsPath(): string {
-    const d = libPath("flows");
+export function getPakageJson(field?: string | [string]) {
+    const p = path.resolve('package.json')
+
+    try {
+        const content = JSON.parse(fs.readFileSync(p).toString()) as Record<string, any>
+        if (field) {
+            return get(content, field)
+        }
+        return content;
+    } catch (e) {
+        return null
+    }
+}
+
+export function getTsConfig(field?: string | [string]) {
+    const p = path.resolve('tsconfig.json')
+
+    try {
+        const content = JSON.parse(fs.readFileSync(p).toString()) as Record<string, any>
+        if (field) {
+            return get(content, field)
+        }
+        return content;
+    } catch (e) {
+        return null
+    }
+}
+
+
+export function buildOutFlowsPath(): string {
+    const d = buildOutPath("flows");
     if (!checkDirectoryExists(d)) {
         try {
             logWarning("./lib not found; try building with `npm run build`")
