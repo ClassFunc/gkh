@@ -44,7 +44,17 @@ export const {{name}}DeleteInSchema = z.object({
     id: z.string(),
 });
 
+//DeleteOut
+export const {{name}}DeleteOutSchema = {{name}}GetOutSchema.extend({
+
+});
+
 //UpdateIn
 export const {{name}}UpdateInSchema = {{name}}Schema.extend({
     id: z.string(),
+});
+
+//UpdateOut
+export const {{name}}UpdateOutSchema = {{name}}GetOutSchema.extend({
+
 });

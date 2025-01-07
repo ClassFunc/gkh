@@ -13,23 +13,23 @@ export const {{name}}Schema = z.object({
     updatedAt: z.instanceof(Timestamp).optional(),
 });
 
-//Get one
-
+//GetIn one
 export const {{name}}GetInSchema = z.object({
     id: z.string(),
 });
 
+//GetOut one
 export const {{name}}GetOutSchema = z.object({
     data: {{name}}Schema.nullable(),
 });
 
-//Get list
-
+//GetIn list
 export const {{name}}ListInSchema = z.object({
     nextCursor: z.string().optional(),
     limit: z.number().default(10).optional(),
 })
 
+//GetOut list
 export const {{name}}ListOutSchema = z.object({
     data: z.array({{name}}Schema),
     length: z.number(),
@@ -39,14 +39,22 @@ export const {{name}}ListOutSchema = z.object({
     nextCursor: z.string().nullable(),
 });
 
-//Delete
-
+//DeleteIn
 export const {{name}}DeleteInSchema = z.object({
     id: z.string(),
 });
 
-//Update
+//DeleteOut
+export const {{name}}DeleteOutSchema = {{name}}GetOutSchema.extend({
 
+});
+
+//UpdateIn
 export const {{name}}UpdateInSchema = {{name}}Schema.extend({
     id: z.string(),
+});
+
+//UpdateOut
+export const {{name}}UpdateOutSchema = {{name}}GetOutSchema.extend({
+
 });
