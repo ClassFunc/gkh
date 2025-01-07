@@ -1,0 +1,60 @@
+
+import {z} from "genkit";
+import {firestore} from "firebase-admin";
+import Timestamp = firestore.Timestamp;
+
+{{commandInputDeclarationCode}}
+
+//Default
+export const {{name}}Schema = z.object({
+    id: z.string().optional(),
+    //add schema
+    createdAt: z.instanceof(Timestamp).optional(),
+    updatedAt: z.instanceof(Timestamp).optional(),
+});
+
+//GetIn one
+export const {{name}}GetInSchema = z.object({
+    id: z.string(),
+});
+
+//GetOut one
+export const {{name}}GetOutSchema = z.object({
+    data: {{name}}Schema.nullable(),
+});
+
+//GetIn list
+export const {{name}}ListInSchema = z.object({
+    nextCursor: z.string().optional(),
+    limit: z.number().default(10).optional(),
+})
+
+//GetOut list
+export const {{name}}ListOutSchema = z.object({
+    data: z.array({{name}}Schema),
+    length: z.number(),
+    limit: z.number(),
+    count: z.number(),
+    hasMore: z.boolean(),
+    nextCursor: z.string().nullable(),
+});
+
+//DeleteIn
+export const {{name}}DeleteInSchema = z.object({
+    id: z.string(),
+});
+
+//DeleteOut
+export const {{name}}DeleteOutSchema = {{name}}GetOutSchema.extend({
+
+});
+
+//UpdateIn
+export const {{name}}UpdateInSchema = {{name}}Schema.extend({
+    id: z.string(),
+});
+
+//UpdateOut
+export const {{name}}UpdateOutSchema = {{name}}GetOutSchema.extend({
+
+});

@@ -12,6 +12,7 @@ Imagine you have genkit, and the library helps you complete your ideas with code
 - [x] [make:prompt - make a prompt](#make:prompt)
 - [x] [make:reranker - make a reranker](#make:reranker)
 - [x] [docs:gen - generate openapi documents](#docs:gen)
+- [x] [make:schema - make:schema](#make:schema)
 
 ## Usage
 
@@ -153,6 +154,21 @@ Options:
   -o, --out <out>            output docs directory (default: "./docs")
   -e, --env-file <env-file>  env file path (default: ".env")
   -h, --help                 display help for command
+
+```
+
+### <a id="make:schema">make:schema</a>
+
+```
+Usage: gkh make:schema [options] <name>
+
+make:schema
+
+Arguments:
+  name        name of schema , ex: users
+
+Options:
+  -h, --help  display help for command
 
 ```
 
