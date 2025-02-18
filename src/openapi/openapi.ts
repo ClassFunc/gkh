@@ -4,8 +4,8 @@ import * as yaml from "yaml";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {configDotenv} from "dotenv";
-import {upperFirst} from "lodash";
-import {getPakageJson, getTsConfig, buildOutFlowsPath} from "@/util/pathUtils";
+import {get, upperFirst} from "lodash";
+import {buildOutFlowsPath, getPakageJson} from "@/util/pathUtils";
 import {logDone, logRunning, logWarning} from "@/util/logger";
 import {IDocsGenInputSchema} from "@/commands/docs_gen";
 
@@ -96,14 +96,17 @@ export type IFlowSchema = z.infer<typeof FlowSchema>
 function registryFlowInDir({flowList, tags}: z.infer<typeof RegistryFlowInDirInputSchema>) {
     const flowConfigs: Array<IFlowSchema> = []
     for (let [key, flowObj] of Object.entries(flowList)) {
-        flowObj = flowObj.hasOwnProperty('flow') ? flowObj.flow : flowObj;
+        const isFlow = get(flowObj, '__action.actionType') === 'flow'
+        if (!isFlow)
+            continue
+        const flowAction = get(flowObj, '__action')
         let flowConfig: IFlowSchema = {
             name: "",
             inputSchema: null,
             outputSchema: null,
             streamSchema: null,
         }
-        for (const [field, fieldValue] of Object.entries(flowObj as any)) {
+        for (const [field, fieldValue] of Object.entries(flowAction as any)) {
 
             const takeFields = [
                 "name",
