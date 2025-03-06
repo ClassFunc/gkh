@@ -6,8 +6,9 @@ import * as path from "node:path";
 import {configDotenv} from "dotenv";
 import {get, upperFirst} from "lodash";
 import {buildOutFlowsPath, getPakageJson} from "@/util/pathUtils";
-import {logDone, logRunning, logWarning} from "@/util/logger";
+import {logDone, logInfo, logRunning, logWarning} from "@/util/logger";
 import {IDocsGenInputSchema} from "@/commands/docs_gen";
+import {ActionMetadata} from 'genkit'
 
 extendZodWithOpenApi(z);
 
@@ -84,64 +85,26 @@ const RegistryFlowInDirInputSchema = z.object(
     }
 )
 
-
-export const FlowSchema = z.object({
-    name: z.string(),
-    inputSchema: z.any().optional(),
-    outputSchema: z.any().optional(),
-    streamSchema: z.any().optional()
-})
-export type IFlowSchema = z.infer<typeof FlowSchema>
-
 function registryFlowInDir({flowList, tags}: z.infer<typeof RegistryFlowInDirInputSchema>) {
-    const flowConfigs: Array<IFlowSchema> = []
-    for (let [key, flowObj] of Object.entries(flowList)) {
+    logInfo(tags)
+    const actionMetadataList: Array<ActionMetadata<any, any, any>> = []
+    for (let [dir, flowObj] of Object.entries(flowList)) {
+        // console.group(dir)
         const isFlow = get(flowObj, '__action.actionType') === 'flow'
         if (!isFlow)
             continue
         const flowAction = get(flowObj, '__action')
-        let flowConfig: IFlowSchema = {
-            name: "",
-            inputSchema: null,
-            outputSchema: null,
-            streamSchema: null,
-        }
-        for (const [field, fieldValue] of Object.entries(flowAction as any)) {
-
-            const takeFields = [
-                "name",
-                "inputSchema",
-                "outputSchema",
-                "streamSchema",
-            ]
-            if (!takeFields.includes(field)) {
-                continue
-            }
-
-            if (field === "name" && !!fieldValue) {
-                flowConfig.name = fieldValue! as string
-            }
-            if (field === "inputSchema") {
-                flowConfig.inputSchema = fieldValue
-            }
-            if (field === "outputSchema") {
-                flowConfig.outputSchema = fieldValue
-            }
-            if (field === "streamSchema") {
-                flowConfig.streamSchema = fieldValue
-            }
-        }
-        if (!!flowConfig.name)
-            flowConfigs.push(flowConfig)
+        actionMetadataList.push(flowAction)
+        // console.groupEnd()
     }
 
-    if (!flowConfigs || flowConfigs.length === 0) {
+    if (!actionMetadataList.length) {
         return
     }
 
-    for (const flowConf of flowConfigs) {
-
-        const isQueryStreamable = flowConf.streamSchema && (Object.keys(flowConf.streamSchema).length > 0)
+    // logInfo(flowConfigs)
+    for (const meta of actionMetadataList) {
+        const isQueryStreamable = !!meta.streamSchema && (Object.keys(meta.streamSchema).length > 0)
         const streamableParam = isQueryStreamable ?
             {
                 name: 'stream',
@@ -155,35 +118,34 @@ function registryFlowInDir({flowList, tags}: z.infer<typeof RegistryFlowInDirInp
         const streamableResponsesContent = isQueryStreamable ?
             {
                 'text/event-stream': {
-                    schema: flowConf.streamSchema
+                    schema: meta.streamSchema
                 }
             } : undefined;
-        // console.log({requestQueryStreamable})
         const parameters = isQueryStreamable ? [streamableParam] : []
-        let inputSchema = flowConf.inputSchema ?? z.nullable(z.any());
-        // console.log(inputSchema._def.typeName)
+        let inputSchema = meta.inputSchema ?? z.nullable(z.any());
+
         if (inputSchema?._def?.typeName === "ZodVoid") {
             inputSchema = z.nullable(z.any())
         }
 
-        let outputSchema = flowConf.outputSchema ?? z.nullable(z.any());
+        let outputSchema = meta.outputSchema ?? z.nullable(z.any());
         // console.log(outputSchema?._def?.typeName)
         // if (outputSchema?._def?.typeName === "ZodNever") {
         //     outputSchema = neverSchema;
         // }
-        const INSchemaName = `${upperFirst(flowConf.name)}IN`
-        const OUTSchemaName = `${upperFirst(flowConf.name)}OUT`
+        const INSchemaName = `${upperFirst(meta.name)}IN`
+        const OUTSchemaName = `${upperFirst(meta.name)}OUT`
         registry.register(INSchemaName, z.object({data: inputSchema}))
         registry.register(OUTSchemaName, z.object({result: outputSchema}))
         console.log(
-            `  |-- openapi registerPath: /${flowConf.name}`,
+            `  |-- openapi registerPath: /${meta.name}`,
             ` 🏷️`, tags,
             isQueryStreamable ? "✅ streamable" : ""
         )
         try {
             registry.registerPath({
                 method: 'post',
-                path: `/${flowConf.name}`,
+                path: `/${meta.name}`,
                 security: [
                     {
                         [bearerAuth.name]: []

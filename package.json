@@ -1,6 +1,6 @@
 {
   "name": "gkh",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "genkit helper",
   "main": "esbuild_out/index.js",
   "scripts": {
@@ -20,16 +20,16 @@
   },
   "private": false,
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^7.2.0",
-    "@genkit-ai/firebase": "^0.9.5",
-    "@genkit-ai/vertexai": "^0.9.5",
+    "@asteasolutions/zod-to-openapi": "^7.3.0",
+    "@genkit-ai/firebase": "^1.1.0",
+    "@genkit-ai/vertexai": "^1.1.0",
     "chalk": "^4.1.2",
     "commander": "^12.1.0",
-    "dotenv": "^16.4.5",
-    "genkit": "^0.9.5",
+    "dotenv": "^16.4.7",
+    "genkit": "^1.1.0",
     "handlebars": "^4.7.8",
     "lodash": "^4.17.21",
-    "yaml": "^2.6.0",
+    "yaml": "^2.7.0",
     "zod": "^3.23.8"
   },
   "bin": {
@@ -45,9 +45,9 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@types/lodash": "^4.17.13",
-    "@types/node": "^22.9.0",
-    "genkit-cli": "^0.9.5",
-    "typescript": "^5.6.3"
+    "@types/lodash": "^4.17.16",
+    "@types/node": "^22.13.9",
+    "genkit-cli": "^1.1.0",
+    "typescript": "^5.8.2"
   }
 }
