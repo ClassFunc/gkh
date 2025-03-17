@@ -46,11 +46,19 @@ export function add_getAllFlows() {
 }
 
 const getAllFlows_code = (data: ICommandInput) => {
-    const flowsDirPath = data.type === 'functions' ? '`/flows`' : '';
+    let templateName
+    switch (data.type) {
+        case 'api':
+            templateName = 'getAllFlows.ts.hbs'
+            break;
+        case 'functions':
+            templateName = 'getAllFlowsForFunctions.ts.hbs'
+            break;
+    }
     return readTemplate({
         dir: `add_getAllFlows`,
-        name: `getAllFlows.ts.hbs`,
+        name: templateName!,
         data: data,
-        addtionsData: {flowsDirPath, commandInputDeclarationCode}
+        addtionsData: {commandInputDeclarationCode}
     })
 }
