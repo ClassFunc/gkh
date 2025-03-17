@@ -5,18 +5,19 @@ import {z} from "genkit";
 {{commandInputDeclarationCode}}
 
 export const {{flowName}} = ai.defineFlow(
-{
-    name: "{{flowName}}",
-    inputSchema: z.object({
-        query: z.string()
-    }),
-    outputSchema: z.any(),
-},
-async (input) => {
-    // implementation
-    const response = await ai.generate({
-        prompt: input.query,
-    })
+    {
+        name: "{{flowName}}",
+        inputSchema: z.object({
+            query: z.string()
+        }),
+        outputSchema: z.any(),
+    },
+    async (input) => {
+        // implementation
+        const response = await ai.generate({
+            prompt: input.query,
+        })
 
-    return response.text;
-});
+        return response.text;
+    }
+);

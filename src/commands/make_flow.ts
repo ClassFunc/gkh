@@ -37,7 +37,7 @@ export function make_flow() {
             makeFile(exportWriteTo, "")
         }
         let flowTsContent = readFileSync(exportWriteTo).toString()
-        const exportCode = `export {${flowName}} from "./flows/${flowName}"`
+        const exportCode = `export {${flowName}, onCall${upperFirst(flowName)}} from "./flows/${flowName}"`
         if (!isIncludes(flowTsContent, exportCode)) {
             flowTsContent += `\n` + exportCode
             const doneWriteExport = makeFile(exportWriteTo, flowTsContent, true)
