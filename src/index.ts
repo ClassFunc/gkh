@@ -40,7 +40,7 @@ gkhProgram
 
 gkhProgram
   .command("make:flow")
-  .argument("<name>", "name of flow, separated by / , ex: users/list")
+  .argument("<name>", "name of flow, separated by / , e.g: users/list")
   .option("-s, --stream [stream]", "flow is streaming or not", false)
   .option("-t, --type [type]", `supported 'defineFlow', 'onFlow','onCallGenkit'`, 'defineFlow',)
   .description(
@@ -50,7 +50,7 @@ gkhProgram
 
 gkhProgram
   .command("make:rag")
-  .argument("<name>", "rag name; ex: menuQA")
+  .argument("<name>", "rag name; e.g: menuQA")
   .option(
     "-t, --type [type]",
     "type of vectorstore; supported 'fs'('firestore'), 'simple','local', 'custom' ",
@@ -121,8 +121,8 @@ gkhProgram
 
 gkhProgram
   .command("make:schema")
-  .description("make:schema")
-  .argument("<name>", "name of schema , ex: users")
+  .description("make a schema")
+  .argument("<name>", "name of schema , e.g: users")
   .action(make_schema);
 
 // NEXT_COMMAND__DONOTREMOVETHISLINE

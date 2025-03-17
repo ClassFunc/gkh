@@ -12,12 +12,13 @@ Imagine you have genkit, and the library helps you complete your ideas with code
 - [x] [make:prompt - make a prompt](#make:prompt)
 - [x] [make:reranker - make a reranker](#make:reranker)
 - [x] [docs:gen - generate openapi documents](#docs:gen)
-- [x] [make:schema - make:schema](#make:schema)
+- [x] [make:schema - make a schema](#make:schema)
 
 ## Usage
 
 ```shell
 npx gkh
+# npx gkh@2 for genkit version < 1.x (0.9 or 0.5)
 #or
 npm i -g gkh
 # then starting use `gkh` command on your root of genkit project or `functions` folder.
@@ -58,7 +59,7 @@ make a flow
 genkit docs: https://firebase.google.com/docs/genkit/flows
 
 Arguments:
-  name                   name of flow, separated by / , ex: users/list
+  name                   name of flow, separated by / , e.g: users/list
 
 Options:
   -s, --stream [stream]  flow is streaming or not (default: false)
@@ -76,7 +77,7 @@ make a rag (indexer & retriever)
 genkit docs: https://firebase.google.com/docs/genkit/rag
 
 Arguments:
-  name                                 rag name; ex: menuQA
+  name                                 rag name; e.g: menuQA
 
 Options:
   -t, --type [type]                    type of vectorstore; supported 'fs'('firestore'), 'simple','local', 'custom'  (default: "simple")
@@ -162,10 +163,10 @@ Options:
 ```
 Usage: gkh make:schema [options] <name>
 
-make:schema
+make a schema
 
 Arguments:
-  name        name of schema , ex: users
+  name        name of schema , e.g: users
 
 Options:
   -h, --help  display help for command

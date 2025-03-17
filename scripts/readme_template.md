@@ -10,6 +10,7 @@ Imagine you have genkit, and the library helps you complete your ideas with code
 
 ```shell
 npx gkh
+# npx gkh@2 for genkit version < 1.x (0.9 or 0.5)
 #or
 npm i -g gkh
 # then starting use `gkh` command on your root of genkit project or `functions` folder.
