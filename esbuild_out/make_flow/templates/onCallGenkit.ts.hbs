@@ -1,0 +1,29 @@
+import {ai} from "@/ai/ai";
+import {z} from "genkit";
+import {onCallGenkit} from "firebase-functions/v2/https";
+
+
+{{commandInputDeclarationCode}}
+
+export const {{flowName}} = ai.defineFlow(
+{
+    name: '{{flowName}}',
+    inputSchema: z.object({
+        query: z.string(),
+    }),
+    outputSchema: z.any(),
+    streamSchema: z.string(),
+},
+async (input, { sendChunk }) => {
+    // implementation
+    const response = await ai.generate({
+        prompt: input.query,
+    })
+
+    return response.text;
+});
+
+export const onCall{{FlowName}} = onCallGenkit(
+    {},
+    {{flowName}}
+);

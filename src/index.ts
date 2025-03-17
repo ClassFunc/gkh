@@ -42,7 +42,7 @@ gkhProgram
   .command("make:flow")
   .argument("<name>", "name of flow, separated by / , ex: users/list")
   .option("-s, --stream [stream]", "flow is streaming or not", false)
-  .option("-t, --type [type]", "supported 'defineFlow', 'onFlow'", "defineFlow")
+  .option("-t, --type [type]", `supported 'defineFlow', 'onFlow','onCallGenkit'`, 'defineFlow',)
   .description(
     "make a flow\ngenkit docs: https://firebase.google.com/docs/genkit/flows",
   )
@@ -62,9 +62,9 @@ gkhProgram
     "firestore collection",
     "yourFirestoreCollection",
   )
-  .option("-cf, --contentField [contentField]", "contentField", "contentField")
+  .option("--cf, --contentField [contentField]", "contentField", "contentField")
   .option(
-    "-vf, --vectorField [vectorField]",
+    "--vf, --vectorField [vectorField]",
     `vectorField; default: $contentField + '_' + embedder.name`,
     "",
   )

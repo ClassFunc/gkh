@@ -4,7 +4,7 @@ import {z} from "genkit";
 
 {{commandInputDeclarationCode}}
 
-export const {{flowName}} = ai.defineStreamingFlow(
+export const {{flowName}} = ai.defineFlow(
 {
     name: "{{flowName}}",
     inputSchema: z.object({
@@ -13,15 +13,13 @@ export const {{flowName}} = ai.defineStreamingFlow(
     outputSchema: z.any(),
     streamSchema: z.any()
 },
-async (input, streamingCallback) => {
+async (input, {context, sendChunk}) => {
     // implementation
     const {response, stream} = await ai.generateStream({
         prompt: input.query,
     })
     for await (const chunk of stream) {
-        if (streamingCallback) {
-            streamingCallback(chunk.text)
-        }
+        sendChunk(chunk.text)
     }
     return await response;
 });

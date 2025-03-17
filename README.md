@@ -62,7 +62,7 @@ Arguments:
 
 Options:
   -s, --stream [stream]  flow is streaming or not (default: false)
-  -t, --type [type]      supported 'defineFlow', 'onFlow' (default: "defineFlow")
+  -t, --type [type]      supported 'defineFlow', 'onFlow','onCallGenkit' (default: "defineFlow")
   -h, --help             display help for command
 
 ```
@@ -76,15 +76,15 @@ make a rag (indexer & retriever)
 genkit docs: https://firebase.google.com/docs/genkit/rag
 
 Arguments:
-  name                                rag name; ex: menuQA
+  name                                 rag name; ex: menuQA
 
 Options:
-  -t, --type [type]                   type of vectorstore; supported 'fs'('firestore'), 'simple','local', 'custom'  (default: "simple")
-  -l, --limit [limit]                 retriever's limit (default: 5)
-  -c, --collection [collection]       firestore collection (default: "yourFirestoreCollection")
-  -cf, --contentField [contentField]  contentField (default: "contentField")
-  -vf, --vectorField [vectorField]    vectorField; default: $contentField + '_' + embedder.name (default: "")
-  -h, --help                          display help for command
+  -t, --type [type]                    type of vectorstore; supported 'fs'('firestore'), 'simple','local', 'custom'  (default: "simple")
+  -l, --limit [limit]                  retriever's limit (default: 5)
+  -c, --collection [collection]        firestore collection (default: "yourFirestoreCollection")
+  --cf, --contentField [contentField]  contentField (default: "contentField")
+  --vf, --vectorField [vectorField]    vectorField; default: $contentField + '_' + embedder.name (default: "")
+  -h, --help                           display help for command
 
 ```
 

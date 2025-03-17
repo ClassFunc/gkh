@@ -3,15 +3,16 @@ import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 import {getCommandInputDeclarationCode, getParsedData} from "@/util/commandParser";
 import {makeFile, srcPath} from "@/util/pathUtils";
 import {existsSync, readFileSync} from "node:fs";
-import {camelCase} from "lodash";
+import {camelCase, upperFirst} from "lodash";
 import {logDone} from "@/util/logger";
 import {isIncludes} from "@/util/strings";
 import {readTemplate} from "@/commands/index";
+import {isGenkit0x} from "@/util/detectGenkitVersion";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
     name: z.string().includes("/"),
-    type: z.enum(["defineFlow", "onFlow"]).default("defineFlow").optional(),
+    type: z.enum(["defineFlow", "onFlow", "onCallGenkit"]).default("defineFlow").optional(),
     stream: z.boolean().default(false).optional()
 })
 
@@ -66,9 +67,16 @@ export function make_flow() {
 
 const getTemplateCode = (data: ICommandInput, flowName: string) => {
     let tplName = ''
+
+    // batch for genkit > 1.0
+    if ((data.type === 'onFlow') && !isGenkit0x())
+        data.type = 'onCallGenkit'
+
     switch (data.type) {
         case 'onFlow':
-            tplName = 'onFlow'
+            if (isGenkit0x())
+                tplName = 'onFlow'
+
             break;
         case 'defineFlow':
             if (data.stream) {
@@ -77,11 +85,15 @@ const getTemplateCode = (data: ICommandInput, flowName: string) => {
                 tplName = 'defineFlow'
             }
             break;
+        case 'onCallGenkit':
+            tplName = 'onCallGenkit'
+            break;
     }
     data = {
         ...data,
         ...{
             flowName,
+            FlowName: upperFirst(flowName),
             commandInputDeclarationCode
         }
     };
