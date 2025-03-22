@@ -66,7 +66,7 @@ fs.readdirSync(buildOutFlowsPath()).forEach(
             return;
         }
 
-        const flowsJs = path.join(dir, 'flows')
+        const flowsJs = path.join(dir, 'flows.js')
 
         try {
             const flowList = require(flowsJs) // /flows is flows.ts|.js
