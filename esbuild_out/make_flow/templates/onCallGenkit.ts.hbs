@@ -4,7 +4,7 @@ import {onCallGenkit} from "firebase-functions/v2/https";
 
 {{commandInputDeclarationCode}}
 
-export const {{flowName}} = ai.defineFlow(
+export const {{flowName}}Define = ai.defineFlow(
     {
         name: '{{flowName}}',
         inputSchema: z.object({
@@ -23,7 +23,7 @@ export const {{flowName}} = ai.defineFlow(
     }
 );
 
-export const onCall{{FlowName}} = onCallGenkit(
+export const {{flowName}} = onCallGenkit(
     {},
-    {{flowName}}
+    {{flowName}}Define
 );
