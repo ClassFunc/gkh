@@ -33,6 +33,7 @@ export const indexConfig: GKHIndexConfigSchema = {
     limit: $limit,
 };
 
+// @ts-ignore
 export const {{name}}Retriever = defineFirestoreRetriever(ai, {
     name: '{{name}}Retriever',
     firestore: getFirestore(),

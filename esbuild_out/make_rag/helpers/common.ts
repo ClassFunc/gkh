@@ -49,7 +49,7 @@ export const doEmbed = async (
     content: string,
     embedTaskType: EmbedderReference["config"]["embedTaskType"],
 ): Promise<number[]> => {
-    return await ai.embed({embedder, content, options: {embedTaskType: embedTaskType}});
+    return (await ai.embed({embedder, content, options: {embedTaskType: embedTaskType}})).at(0)?.embedding || [];
 };
 
 export const vectorFieldName = (fieldName: string, embedderName: string) => {
