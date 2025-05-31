@@ -20,17 +20,17 @@
   },
   "private": false,
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^7.3.0",
-    "@genkit-ai/firebase": "^1.2.0",
-    "@genkit-ai/vertexai": "^1.2.0",
+    "@asteasolutions/zod-to-openapi": "^7.3.2",
+    "@genkit-ai/firebase": "^1.11.0",
+    "@genkit-ai/vertexai": "^1.11.0",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
-    "dotenv": "^16.4.7",
-    "genkit": "^1.2.0",
+    "dotenv": "^16.5.0",
+    "genkit": "^1.11.0",
     "handlebars": "^4.7.8",
     "lodash": "^4.17.21",
-    "yaml": "^2.7.0",
-    "zod": "^3.23.8"
+    "yaml": "^2.8.0",
+    "zod": "^3.25.42"
   },
   "bin": {
     "gk": "esbuild_out/index.js",
@@ -45,9 +45,9 @@
   ],
   "license": "MIT",
   "devDependencies": {
-    "@types/lodash": "^4.17.16",
-    "@types/node": "^22.13.10",
-    "genkit-cli": "^1.2.0",
-    "typescript": "^5.8.2"
+    "@types/lodash": "^4.17.17",
+    "@types/node": "^22.15.29",
+    "genkit-cli": "^1.11.0",
+    "typescript": "^5.8.3"
   }
 }
