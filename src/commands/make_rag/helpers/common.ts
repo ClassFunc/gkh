@@ -78,8 +78,10 @@ export const fsCommonRetrieverRetrieveWithPreFilter = async (
     }: FSQueryRetrieverRetrieveParams & { config: Partial<GKHIndexConfigSchema> },
 ): Promise<Document[]> => {
     const _config = mergeConfig(config, withConfig);
-    if (preFilterQuery.firestore.collection.name !== _config.collection) {
-        throw new Error("preFilterQuery collection name not match with collection: " + _config.collection);
+    const preFilterCollName = preFilterQuery.firestore.collection.name
+    const confCollName = _config.collection;
+    if (preFilterCollName !== confCollName) {
+        throw new Error(`preFilterQuery collection name not match with collection: "${preFilterCollName} !== ${confCollName}"`);
     }
     const vectorValue = await doEmbed(_config.embedder, query, embedTaskType);
     const snap = await preFilterQuery
@@ -98,7 +100,7 @@ export const fsCommonRetrieverRetrieveWithPreFilter = async (
     const docs = snap.docs.map((d) => {
         const metadataFields: Record<string, any> = _config.metadataFields.reduce(
             (obj, key: string) => {
-                if (obj.hasOwnProperty(key)) {
+                if (!obj.hasOwnProperty(key)) {
                     obj[key] = d.get(key);
                 }
                 return obj;
