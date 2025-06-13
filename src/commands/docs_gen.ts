@@ -1,4 +1,4 @@
-import {logInfo, logRunning} from "@/util/logger";
+import {logError, logInfo, logRunning} from "@/util/logger";
 import {z} from "zod";
 import {GlobalCommandInputSchema} from "@/types/GlobalCommandInputSchema";
 import {Command} from "commander";
@@ -14,6 +14,10 @@ export async function docs_gen(options: any, cmd: Command) {
     logRunning("generating openapi docs...")
     options = cmd.optsWithGlobals();
     logInfo(options)
-    require('../openapi/openapi').writeDocumentation(options)
+    try {
+        require('../openapi/openapi').writeDocumentation(options)
+    } catch (e) {
+        logError(e)
+    }
 }
 
