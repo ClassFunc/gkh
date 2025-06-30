@@ -1,0 +1,9 @@
+
+import {z} from "genkit";
+import {firestore} from "firebase-admin";
+import Timestamp = firestore.Timestamp;
+
+{{commandInputDeclarationCode}}
+
+export const {{name}}Schema = {{schemaString}};
+export type I{{name}}Schema = z.infer<typeof {{name}}Schema>;
