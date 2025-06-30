@@ -4,9 +4,9 @@ import * as yaml from "yaml";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {configDotenv} from "dotenv";
-import {get, upperFirst} from "lodash";
+import {compact, get, isEmpty, pick, upperFirst} from "lodash";
 import {buildOutFlowsPath, getPakageJson} from "@/util/pathUtils";
-import {logDone, logInfo, logRunning, logWarning} from "@/util/logger";
+import {logDone, logError, logInfo, logRunning, logWarning} from "@/util/logger";
 import {IDocsGenInputSchema} from "@/commands/docs_gen";
 import {ActionMetadata} from 'genkit'
 
@@ -74,7 +74,7 @@ fs.readdirSync(buildOutFlowsPath()).forEach(
                 registryFlowInDir({flowList, tags: [String(flowDir)]})
             }
         } catch (e: any) {
-            logWarning(e)
+            logError(e)
         }
     })
 
@@ -87,62 +87,72 @@ const RegistryFlowInDirInputSchema = z.object(
 
 function registryFlowInDir({flowList, tags}: z.infer<typeof RegistryFlowInDirInputSchema>) {
     logInfo(tags)
-    const actionMetadataList: Array<ActionMetadata<any, any, any>> = []
+    let actionMetadataList: Array<ActionMetadata<any, any, any>> = []
     for (let [dir, flowObj] of Object.entries(flowList)) {
         // console.group(dir)
-        const isFlow = get(flowObj, '__action.actionType') === 'flow'
+        // console.log(flowObj)
+        const isFlow = (get(flowObj, '__action.actionType') || get(flowObj, 'flow.__action.actionType')) === 'flow'
         if (!isFlow)
             continue
         const flowAction = get(flowObj, '__action')
+        // logInfo(flowAction)
         actionMetadataList.push(flowAction)
         // console.groupEnd()
     }
 
-    if (!actionMetadataList.length) {
+    actionMetadataList = compact(actionMetadataList)
+    if (isEmpty(actionMetadataList)) {
         return
     }
+    // logWarning(actionMetadataList.map(t => pick(t, ['name', 'actionType'])))
 
     // logInfo(flowConfigs)
     for (const meta of actionMetadataList) {
-        const isQueryStreamable = !!meta.streamSchema && (Object.keys(meta.streamSchema).length > 0)
-        const streamableParam = isQueryStreamable ?
-            {
-                name: 'stream',
-                in: 'query',
-                schema: {
-                    type: "boolean",
-                    default: false
-                }
-            } : undefined;
-        // console.log(flowConf.streamSchema)
-        const streamableResponsesContent = isQueryStreamable ?
-            {
-                'text/event-stream': {
-                    schema: meta.streamSchema
-                }
-            } : undefined;
-        const parameters = isQueryStreamable ? [streamableParam] : []
-        let inputSchema = meta.inputSchema ?? z.nullable(z.any());
-
-        if (inputSchema?._def?.typeName === "ZodVoid") {
-            inputSchema = z.nullable(z.any())
-        }
-
-        let outputSchema = meta.outputSchema ?? z.nullable(z.any());
-        // console.log(outputSchema?._def?.typeName)
-        // if (outputSchema?._def?.typeName === "ZodNever") {
-        //     outputSchema = neverSchema;
-        // }
-        const INSchemaName = `${upperFirst(meta.name)}IN`
-        const OUTSchemaName = `${upperFirst(meta.name)}OUT`
-        registry.register(INSchemaName, z.object({data: inputSchema}))
-        registry.register(OUTSchemaName, z.object({result: outputSchema}))
-        console.log(
-            `  |-- openapi registerPath: /${meta.name}`,
-            ` 🏷️`, tags,
-            isQueryStreamable ? "✅ streamable" : ""
-        )
+        // logInfo('registering', meta.name);
         try {
+            const isQueryStreamable = !!meta.streamSchema && (Object.keys(meta.streamSchema).length > 0)
+            const streamableParam = isQueryStreamable ?
+                {
+                    name: 'stream',
+                    in: 'query',
+                    schema: {
+                        type: "boolean",
+                        default: false
+                    }
+                } : undefined;
+            // console.log(flowConf.streamSchema)
+            const streamableResponsesContent = isQueryStreamable ?
+                {
+                    'text/event-stream': {
+                        schema: meta.streamSchema
+                    }
+                } : undefined;
+            const parameters = isQueryStreamable ? [streamableParam] : []
+
+            let inputSchema = meta.inputSchema ?? z.nullable(z.any());
+
+            if (inputSchema?._def?.typeName === "ZodVoid") {
+                inputSchema = z.nullable(z.any())
+            }
+
+            let outputSchema = meta.outputSchema ?? z.nullable(z.any());
+            // console.log(outputSchema?._def?.typeName)
+            // if (outputSchema?._def?.typeName === "ZodNever") {
+            //     outputSchema = neverSchema;
+            // }
+            const INSchemaName = `${upperFirst(meta.name)}IN`
+            const OUTSchemaName = `${upperFirst(meta.name)}OUT`
+            // console.log({
+            //     INSchemaName,
+            //     OUTSchemaName,
+            // })
+            registry.register(INSchemaName, z.object({data: inputSchema}))
+            registry.register(OUTSchemaName, z.object({result: outputSchema}))
+            console.log(
+                `  |-- openapi registerPath: /${meta.name}`,
+                ` 🏷️`, tags,
+                isQueryStreamable ? "✅ streamable" : ""
+            )
             registry.registerPath({
                 method: 'post',
                 path: `/${meta.name}`,
@@ -190,7 +200,8 @@ function registryFlowInDir({flowList, tags}: z.infer<typeof RegistryFlowInDirInp
                 },
             })
         } catch (e) {
-            console.error((e as Error).message)
+            logError('[registryFlowInDir] error:', e)
+            return;
         }
     }
 }
