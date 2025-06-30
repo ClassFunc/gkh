@@ -171,10 +171,12 @@ Usage: gkh make:schema [options] <name>
 make a schema
 
 Arguments:
-  name        name of schema , e.g: users
+  name                   name of schema , e.g: users
 
 Options:
-  -h, --help  display help for command
+  -j, --jsonPath <name>  from json path (default: "")
+  -c, --fromClipboard    from clipboard's json value (default: false)
+  -h, --help             display help for command
 
 ```
 
