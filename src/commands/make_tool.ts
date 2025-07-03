@@ -4,6 +4,7 @@ import {getCommandInputDeclarationCode, getParsedData} from "@/util/commandParse
 import {makeFile, srcPath} from "@/util/pathUtils";
 import {logDone} from "@/util/logger";
 import {readTemplate} from "@/commands/index";
+import {camelCase} from "lodash";
 
 const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
@@ -18,7 +19,7 @@ const TOOLS_DIR = 'tools';
 export function make_tool() {
     const data = getParsedData(arguments, CommandInputSchema)
     commandInputDeclarationCode = getCommandInputDeclarationCode(data);
-    const code = get_code(data)
+    const code = get_code({...data, ...{name: camelCase(data.name)}})
     // implementations
 
     const fpath = srcPath(TOOLS_DIR, data.name + "Tool.ts")
@@ -30,7 +31,7 @@ export function make_tool() {
 
 export function get_code(data: ICommandInput) {
     // work with input
-    console.log({...data, commandInputDeclarationCode})
+    // console.log({...data, commandInputDeclarationCode})
     return readTemplate(
         {
             dir: `make_tool`,
