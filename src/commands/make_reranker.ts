@@ -9,7 +9,7 @@ const CommandInputSchema = GlobalCommandInputSchema.extend({
     // from commander;
     name: z.string(),
     topK: z.number().max(1000).default(10).optional(),
-    ref: z.string().default("vertexai/semantic-ranker-512")
+    ref: z.string().default("vertexai/semantic-ranker-fast-004")
 })
 
 type ICommandInput = z.infer<typeof CommandInputSchema>;
