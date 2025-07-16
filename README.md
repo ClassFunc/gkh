@@ -143,7 +143,7 @@ Arguments:
 
 Options:
   -k, --topK [topK]  topK (default: 10)
-  -r, --ref [ref]    reference of reranker (default: "vertexai/semantic-ranker-512")
+  -r, --ref [ref]    reference of reranker (default: "vertexai/semantic-ranker-fast-004")
   -h, --help         display help for command
 
 ```
