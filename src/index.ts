@@ -107,7 +107,7 @@ gkhProgram
     .option(
         "-r, --ref [ref]",
         "reference of reranker",
-        "vertexai/semantic-ranker-512",
+        "vertexai/semantic-ranker-fast-004",
     )
     .action(make_reranker);
 
