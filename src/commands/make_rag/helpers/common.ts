@@ -49,7 +49,7 @@ export const doEmbed = async (
     content: string,
     embedTaskType: EmbedderReference["config"]["embedTaskType"],
 ): Promise<number[]> => {
-    return (await ai.embed({embedder, content, options: {embedTaskType: embedTaskType}})).at(0)?.embedding || [];
+    return (await ai.embed({embedder, content, options: {embedTaskType: embedTaskType}}))[0].embedding || [];
 };
 
 export const vectorFieldName = (fieldName: string, embedderName: string) => {
@@ -78,11 +78,6 @@ export const fsCommonRetrieverRetrieveWithPreFilter = async (
     }: FSQueryRetrieverRetrieveParams & { config: Partial<GKHIndexConfigSchema> },
 ): Promise<Document[]> => {
     const _config = mergeConfig(config, withConfig);
-    const preFilterCollName = preFilterQuery.firestore.collection.name
-    const confCollName = _config.collection;
-    if (preFilterCollName !== confCollName) {
-        throw new Error(`preFilterQuery collection name not match with collection: "${preFilterCollName} !== ${confCollName}"`);
-    }
     const vectorValue = await doEmbed(_config.embedder, query, embedTaskType);
     const snap = await preFilterQuery
         .findNearest({
