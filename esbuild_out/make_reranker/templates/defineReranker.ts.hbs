@@ -4,6 +4,19 @@ import {doRerankFn, GKHRerankerConfigSchema, rerankerFnByRef} from "@/rerankers/
 import {z} from "genkit";
 
 {{commandInputDeclarationCode}}
+/* $ref: TODO: register your reranker to your ai.plugins
+export const ai = genkit({
+    plugins: [
+        vertexAIRerankers({
+            rerankers: ['semantic-ranker-512', 'semantic-ranker-fast-004'], // <--- HERE
+            projectId: gcloudProject,
+            location: gcloudLocation,
+        }),
+        vertexAI(),
+    ],
+    // other configs ...
+});
+**/
 
 const defaultConfig: z.infer<typeof GKHRerankerConfigSchema> = {
     k: $topK,
