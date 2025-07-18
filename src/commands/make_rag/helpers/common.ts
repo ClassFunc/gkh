@@ -39,6 +39,7 @@ export interface GKHIndexerActionParams {
     embedTaskType?: EmbedderReference["config"]["embedTaskType"];
     withConfig?: Partial<GKHIndexConfigSchema>;
     updateMethod?: "update" | "set";
+    updateContentField?: boolean;
 }
 
 /*
@@ -116,24 +117,27 @@ export const fsCommonRetrieverRetrieveWithPreFilter = async (
     return rerankedDocs.slice(0, _config.limit);
 };
 
-export const fsCommonIndexerAdd = async ({
-                                             content,
-                                             additionData = {},
-                                             embedTaskType,
-                                             withConfig = {},
-                                             config,
-                                         }: GKHIndexerActionParams & {
-    config: Partial<GKHIndexConfigSchema>;
-}): Promise<DocumentReference> => {
+export const fsCommonIndexerAdd = async (
+    {
+        content,
+        additionData = {},
+        embedTaskType,
+        withConfig = {},
+        config,
+        updateContentField = false,
+    }: GKHIndexerActionParams & { config: Partial<GKHIndexConfigSchema>; }): Promise<DocumentReference> => {
     const _config = mergeConfig(config, withConfig);
     const vectorValue = await doEmbed(_config.embedder, content, embedTaskType);
+    const addedData = {
+        ...additionData,
+        [_config.vectorField]: FieldValue.vector(vectorValue)
+    };
+    if (updateContentField) {
+        addedData[_config.contentField] = content;
+    }
     return getFirestore()
         .collection(_config.collection)
-        .add({
-            ...additionData,
-            [_config.vectorField]: FieldValue.vector(vectorValue),
-            [_config.contentField]: content,
-        });
+        .add(addedData);
 };
 
 export const fsCommonIndexerUpdate = async (
@@ -144,45 +148,40 @@ export const fsCommonIndexerUpdate = async (
         embedTaskType,
         withConfig = {},
         config,
-        updateMethod = "update"
-    }: GKHIndexerActionParams & { config: Partial<GKHIndexConfigSchema> },
-): Promise<WriteResult> => {
+        updateMethod = "update",
+        updateContentField = false
+    }: GKHIndexerActionParams & { config: Partial<GKHIndexConfigSchema>; }): Promise<WriteResult> => {
     const _config = mergeConfig(config, withConfig);
     const vectorValue = await doEmbed(_config.embedder, content, embedTaskType);
+    const updatedData = {
+        ...additionData,
+        [_config.vectorField]: FieldValue.vector(vectorValue)
+    };
+    if (updateContentField) {
+        updatedData[_config.contentField] = content;
+    }
     switch (updateMethod) {
         case "update":
-            return docRef.update(
-                {
-                    ...additionData,
-                    [_config.vectorField]: FieldValue.vector(vectorValue),
-                    [_config.contentField]: content,
-                }
-            );
+            return docRef.update(updatedData);
         case "set":
-            return docRef.set(
-                {
-                    ...additionData,
-                    [_config.vectorField]: FieldValue.vector(vectorValue),
-                    [_config.contentField]: content,
-                },
-                {merge: true},
-            );
+            return docRef.set(updatedData, {merge: true},);
     }
 };
 
-export const fsCommonRetrieverRetrieve = async ({
-                                                    retriever,
-                                                    query,
-                                                    options,
-                                                    withReranker,
-                                                    withConfig = {},
-                                                    config,
-                                                }: RetrieverParams &
-    Pick<GKHRetrieverActionParams, "withReranker" | "withConfig"> & { config: GKHIndexConfigSchema }): Promise<
-    Document[]
-> => {
+export const fsCommonRetrieverRetrieve = async (
+    {
+        retriever,
+        query,
+        options,
+        withReranker,
+        withConfig = {},
+        config,
+    }: RetrieverParams &
+        Pick<GKHRetrieverActionParams, "withReranker" | "withConfig"> & {
+        config: GKHIndexConfigSchema;
+    }): Promise<Document[]> => {
     const _config = mergeConfig(config, withConfig);
-    options = {..._config, ...options}
+    options = {..._config, ...options};
     const docs = await ai.retrieve({
         retriever,
         query,
@@ -200,15 +199,17 @@ export const fsCommonRetrieverRetrieve = async ({
     return rerankedDocs.slice(0, _config.limit);
 };
 
-export const commonRetrieverRetrieve = async <C extends Record<string, any>>({
-                                                                                 retriever,
-                                                                                 query,
-                                                                                 options,
-                                                                                 withReranker,
-                                                                                 config,
-                                                                             }: RetrieverParams & Pick<GKHRetrieverActionParams, "withReranker"> & {
-    config: C
-}): Promise<Document[]> => {
+export const commonRetrieverRetrieve = async <C extends Record<string, any>>(
+    {
+        retriever,
+        query,
+        options,
+        withReranker,
+        config,
+    }: RetrieverParams &
+        Pick<GKHRetrieverActionParams, "withReranker"> & {
+        config: C;
+    }): Promise<Document[]> => {
     const docs = await ai.retrieve({
         retriever,
         query,
@@ -226,16 +227,16 @@ export const commonRetrieverRetrieve = async <C extends Record<string, any>>({
     return rerankedDocs.slice(0, config.k);
 };
 
-export const commonIndexerIndex = async ({
-                                             indexer,
-                                             documents,
-                                             options,
-                                         }: {
-    indexer: IndexerArgument,
-    documents: Array<Document | string>;
-    options: IndexerParams["options"];
-}) => {
-
+export const commonIndexerIndex = async (
+    {
+        indexer,
+        documents,
+        options,
+    }: {
+        indexer: IndexerArgument;
+        documents: Array<Document | string>;
+        options: IndexerParams["options"];
+    }) => {
     const docs = documents.map((doc) => {
         if (doc instanceof Document) {
             return doc;
