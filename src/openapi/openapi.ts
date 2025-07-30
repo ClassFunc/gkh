@@ -291,7 +291,7 @@ ${yaml.stringify(generatedContent)}
             encoding: 'utf-8',
         }
     );
-    logDone(`docs available at: ${process.env.DOCS_ENDPOINT}`)
+    logDone(`✅ docs available at: ${process.env.DOCS_ENDPOINT}`)
 }
 
 function docsDir(out: string, otherPath: string) {
