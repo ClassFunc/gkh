@@ -93,7 +93,7 @@ export const fsCommonRetrieverRetrieveWithPreFilter = async (
 
     if (snap.empty) return [];
 
-    const docs = snap.docs.map((d) => {
+    let docs = snap.docs.map((d) => {
         const metadataFields: Record<string, any> = _config.metadataFields.reduce(
             (obj, key: string) => {
                 if (!obj.hasOwnProperty(key)) {
@@ -105,7 +105,7 @@ export const fsCommonRetrieverRetrieveWithPreFilter = async (
         );
         return Document.fromText(d.get(_config.contentField), metadataFields);
     });
-
+    docs = docs.filter(d => d.content.some(v => !!v.text || !!v.media))
     if (!withReranker) {
         return docs.slice(0, _config.limit);
     }
@@ -182,12 +182,12 @@ export const fsCommonRetrieverRetrieve = async (
     }): Promise<Document[]> => {
     const _config = mergeConfig(config, withConfig);
     options = {..._config, ...options};
-    const docs = await ai.retrieve({
+    let docs = await ai.retrieve({
         retriever,
         query,
         options,
     });
-
+    docs = docs.filter(d => d.content.some(v => !!v.text || !!v.media))
     if (!withReranker) {
         return docs.slice(0, _config.limit);
     }
