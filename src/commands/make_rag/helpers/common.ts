@@ -109,6 +109,10 @@ export const fsCommonRetrieverRetrieveWithPreFilter = async (
     if (!withReranker) {
         return docs.slice(0, _config.limit);
     }
+    if (docs.length === 0) {
+        console.warn(`No documents found for query: ${query} with preFilterQuery: ${preFilterQuery.toString()}`)
+        return [];
+    }
     const rerankedDocs = await ai.rerank({
         ...withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
         documents: docs,
@@ -191,6 +195,10 @@ export const fsCommonRetrieverRetrieve = async (
     if (!withReranker) {
         return docs.slice(0, _config.limit);
     }
+    if (docs.length === 0) {
+        console.warn(`No documents for rerank`);
+        return [];
+    }
     const rerankedDocs = await ai.rerank({
         ...withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
         documents: docs,
@@ -218,6 +226,10 @@ export const commonRetrieverRetrieve = async <C extends Record<string, any>>(
 
     if (!withReranker) {
         return docs.slice(0, config.k);
+    }
+    if (docs.length === 0) {
+        console.warn(`No documents for rerank`);
+        return [];
     }
     const rerankedDocs = await ai.rerank({
         ...withReranker, //seemore: https://cloud.google.com/generative-ai-app-builder/docs/ranking#models
